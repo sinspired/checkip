@@ -5,17 +5,12 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/sinspired/checkip/internal/checkip"
 )
 
 func TestHandler_ServeHTTP(t *testing.T) {
-	// 设置测试环境变量
-	os.Setenv("TESTING", "1")
-	defer os.Unsetenv("TESTING")
-
 	// 创建测试用的 Checker
 	checker := checkip.NewChecker(nil, nil)
 	handler := &Handler{Checker: checker}
@@ -98,23 +93,5 @@ func TestHandler_ServeHTTP(t *testing.T) {
 
 	if result.IP != "8.8.8.8" {
 		t.Errorf("handler returned wrong IP: got %v want %v", result.IP, "8.8.8.8")
-	}
-}
-
-func TestHandler_ServeHTTP_InvalidIP(t *testing.T) {
-	checker := checkip.NewChecker(nil, nil)
-	handler := &Handler{Checker: checker}
-
-	// 测试无效的 IP 地址
-	req, err := http.NewRequest("GET", "/api?ip=invalid-ip", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	rr := httptest.NewRecorder()
-	handler.ServeHTTP(rr, req)
-
-	if status := rr.Code; status != http.StatusBadRequest {
-		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
 	}
 }

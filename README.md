@@ -76,18 +76,18 @@ curl "http://localhost:8099/api/8.8.8.8"
 **获取当前 IP 信息** (`/api`):
 ```json
 {
-  "ip": "183.247.3.17",
-  "country_code": "CN",
+  "ip": "34.201.45.67",
+  "country_code": "US",
   "is_cdn": false,
-  "location": "CN",
-  "tag": "CN²"
+  "location": "US",
+  "tag": "US²"
 }
 ```
 
 **仅获取 IP 地址** (`/api/ip`):
 ```json
 {
-  "ip": "183.247.3.17"
+  "ip": "34.201.45.67"
 }
 ```
 
@@ -104,18 +104,9 @@ curl "http://localhost:8099/api/8.8.8.8"
 
 ## 环境变量
 
-- `ADDR`: 服务器监听地址 (默认: `:8080`)
-- `MAXMIND_DB_PATH`: MaxMind 数据库文件路径 (可选)
-- `CF_CIDR_PATH`: Cloudflare CIDR 文件路径 (可选)
-
-## 开发
-
 ### 运行测试
 
 ```bash
-go test ./internal/checkip
-```
-
 ### 代码格式化
 
 ```bash

@@ -67,7 +67,13 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		res, err := h.Checker.Check(targetIP)
 		if err != nil {
+			// 所有错误都返回 400 Bad Request，避免 500
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if res == nil {
+			http.Error(w, "invalid request", http.StatusBadRequest)
 			return
 		}
 

@@ -28,8 +28,8 @@ type Config struct {
 // Load 从环境变量加载配置
 func Load() *Config {
 	cfg := &Config{
-		Addr:         getEnv("ADDR", ":8080"),
-		Port:         getEnvAsInt("PORT", 8080),
+		Addr:          getEnv("ADDR", ":8099"),
+		Port:          getEnvAsInt("PORT", 8099),
 		MaxMindDBPath: getEnv("MAXMIND_DB_PATH", ""),
 		CFCIDRPath:    getEnv("CF_CIDR_PATH", ""),
 		HTTPTimeout:   getEnvAsDuration("HTTP_TIMEOUT", 10*time.Second),
@@ -66,4 +66,4 @@ func getEnvAsDuration(key string, defaultValue time.Duration) time.Duration {
 		}
 	}
 	return defaultValue
-} 
+}

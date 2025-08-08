@@ -23,7 +23,7 @@ var cfCdnAPIs = []string{
 }
 
 // 请求头，避免被 ban
-func getCommonHeaders() map[string]string {
+func cfCommonHeaders() map[string]string {
 	return map[string]string{
 		"User-Agent":      convert.RandUserAgent(),
 		"Accept-Language": "en-US,en;q=0.5",
@@ -63,7 +63,7 @@ func checkCloudflareEndpoint(httpClient *http.Client, url string, expectedStatus
 	}
 
 	// 设置请求头
-	for key, value := range getCommonHeaders() {
+	for key, value := range cfCommonHeaders() {
 		req.Header.Set(key, value)
 	}
 
@@ -119,7 +119,11 @@ func checkCloudflareEndpoint(httpClient *http.Client, url string, expectedStatus
 func FetchCFProxy(httpClient *http.Client) (string, string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+	return FetchCFProxyWithContext(ctx, httpClient)
+}
 
+// FetchCFProxyWithContext：带 context 的版本
+func FetchCFProxyWithContext(ctx context.Context, httpClient *http.Client) (string, string) {
 	type result struct {
 		loc string
 		ip  string
@@ -146,7 +150,6 @@ func FetchCFProxy(httpClient *http.Client) (string, string) {
 				if loc != "" && ip != "" {
 					once.Do(func() {
 						resultChan <- result{loc, ip}
-						cancel()
 					})
 					return
 				}
@@ -170,7 +173,7 @@ func GetCFProxy(httpClient *http.Client, ctx context.Context, baseURL string) (s
 		return "", ""
 	}
 
-	for key, value := range getCommonHeaders() {
+	for key, value := range cfCommonHeaders() {
 		req.Header.Set(key, value)
 	}
 

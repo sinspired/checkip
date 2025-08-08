@@ -32,6 +32,11 @@ func OpenMaxMindDB() (*maxminddb.Reader, error) {
 	}
 	defer zstdDecoder.Close()
 
+	// 确保目录存在
+	if err := os.MkdirAll(OutputPath, 0755); err != nil {
+		return nil, fmt.Errorf("创建数据库目录失败: %w", err)
+	}
+
 	mmdbFile, err := os.OpenFile(mmdbPath, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return nil, fmt.Errorf("maxmind数据库文件创建失败: %w", err)
@@ -55,14 +60,38 @@ func resolveAssetPath(subDir string) string {
 	if os.Getenv("TESTING") == "1" {
 		return os.TempDir()
 	}
-	
+
+	// 优先尝试获取可执行文件路径
 	exePath, err := os.Executable()
-	if err != nil {
-		// fallback to current working directory
-		return filepath.Join("assets", subDir)
+	if err == nil {
+		exeDir := filepath.Dir(exePath)
+		// 检查路径是否有效
+		if _, err := os.Stat(exeDir); err == nil {
+			assetPath := filepath.Join(exeDir, "assets", subDir)
+			// 尝试创建目录以验证权限
+			if err := os.MkdirAll(assetPath, 0755); err == nil {
+				return assetPath
+			}
+		}
 	}
-	exeDir := filepath.Dir(exePath)
-	return filepath.Join(exeDir, "assets", subDir)
+
+	// 如果可执行文件路径不可用，尝试当前工作目录
+	if cwd, err := os.Getwd(); err == nil {
+		assetPath := filepath.Join(cwd, "assets", subDir)
+		if err := os.MkdirAll(assetPath, 0755); err == nil {
+			return assetPath
+		}
+	}
+
+	// 最后的回退方案：使用临时目录
+	tempDir := os.TempDir()
+	assetPath := filepath.Join(tempDir, "checkip", "assets", subDir)
+	if err := os.MkdirAll(assetPath, 0755); err == nil {
+		return assetPath
+	}
+
+	// 如果所有方法都失败，返回一个基本路径
+	return filepath.Join("assets", subDir)
 }
 
 // OpenGeoDB 打开地理数据库
@@ -71,7 +100,7 @@ func OpenGeoDB(path string) (*maxminddb.Reader, error) {
 		// 使用嵌入的数据库
 		return OpenMaxMindDB()
 	}
-	
+
 	// 使用指定的路径
 	db, err := maxminddb.Open(path)
 	if err != nil {

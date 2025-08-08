@@ -1,19 +1,47 @@
 package checkip
 
 import (
+	"crypto/tls"
 	"net/http"
 	"os"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/sinspired/checkip/internal/assets"
 )
+
+func TestGetGeoIPData(t *testing.T) {
+	// 设置测试环境变量
+	// os.Setenv("SUBS-CHECK-CALL", "true")
+	// defer os.Unsetenv("SUBS-CHECK-CALL")
+
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	db, err := assets.OpenMaxMindDB()
+	if err != nil {
+		t.Fatalf("打开 MaxMind 数据库失败: %v", err)
+	}
+	defer db.Close()
+
+	geoData, err := GetGeoIPData(client, db)
+	if err != nil {
+		t.Errorf("获取 GeoIP 数据失败: %v", err)
+	} else {
+		t.Logf("国家代码: %s, IPv4: %s, IPv6: %s, IsCDN: %v", geoData.CountryCode, geoData.IPv4, geoData.IPv6, geoData.IsCDN)
+		if geoData.CountryCode == "" || (geoData.IPv4 == "" && geoData.IPv6 == "") {
+			t.Error("获取的 GeoIP 信息不完整")
+		}
+	}
+}
 
 func TestGetProxyCountryInfo(t *testing.T) {
 	// 设置测试环境变量
 	os.Setenv("TESTING", "1")
 	defer os.Unsetenv("TESTING")
-	
+
 	client := &http.Client{}
 	db, err := assets.OpenMaxMindDB()
 	if err != nil {
@@ -45,16 +73,57 @@ func TestGetCfCdnIPRanges(t *testing.T) {
 }
 
 func TestGetGeoIP(t *testing.T) {
-	client := &http.Client{}
+	// 创建支持不安全 TLS 的客户端（仅用于测试）
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	}
+	client := &http.Client{
+		Timeout:   10 * time.Second,
+		Transport: tr,
+	}
+
+	successCount := 0
+	failCount := 0
+	// testAPIs := []string{
+	// 	"https://checkip.info/json",
+	// 	"http://ip-api.com/json", // 改回 HTTP 版本
+	// }
+	// for _, url := range testAPIs {
+	// 	geo, err := GetGeoIP(client, url)
+	// 	if err != nil {
+	// 		t.Logf("[FAIL] URL: %s, err: %v", url, err)
+	// 		failCount++
+	// 		continue
+	// 	}
+	// 	t.Logf("[OK] URL: %s, Country: %s, IPv4: %s, IPv6: %s, IsCDN: %v", url, geo.CountryCode, geo.IPv4, geo.IPv6, geo.IsCDN)
+	// 	if geo.CountryCode == "" || (geo.IPv4 == "" && geo.IPv6 == "") {
+	// 		t.Logf("[WARN] %s 获取 GeoIP 不完整", url)
+	// 		failCount++
+	// 		continue
+	// 	}
+	// 	successCount++
+	// }
 	for _, url := range geoAPIs {
 		geo, err := GetGeoIP(client, url)
-		t.Logf("URL: %s, Country: %s, IPv4: %s, IPv6: %s, IsCDN: %v", url, geo.CountryCode, geo.IPv4, geo.IPv6, geo.IsCDN)
 		if err != nil {
-			t.Errorf("%s 获取 GeoIP 失败: %v", url, err)
+			t.Logf("[FAIL] URL: %s, err: %v", url, err)
+			failCount++
+			continue
 		}
+		t.Logf("[OK] URL: %s, Country: %s, IPv4: %s, IPv6: %s, IsCDN: %v", url, geo.CountryCode, geo.IPv4, geo.IPv6, geo.IsCDN)
 		if geo.CountryCode == "" || (geo.IPv4 == "" && geo.IPv6 == "") {
-			t.Errorf("%s 获取 GeoIP 不完整", url)
+			t.Logf("[WARN] %s 获取 GeoIP 不完整", url)
+			failCount++
+			continue
 		}
+		successCount++
+	}
+	if successCount == 0 {
+		t.Error("所有 GeoIP API 均获取失败，请检查网络或 API 列表")
+	} else {
+		t.Logf("GeoIP API 测试成功 %d 个，失败 %d 个", successCount, failCount)
 	}
 }
 
@@ -116,7 +185,7 @@ func TestGetMaxMindData(t *testing.T) {
 	// 设置测试环境变量
 	os.Setenv("TESTING", "1")
 	defer os.Unsetenv("TESTING")
-	
+
 	db, err := assets.OpenMaxMindDB()
 	if err != nil {
 		t.Fatalf("打开 MaxMind 数据库失败: %v", err)

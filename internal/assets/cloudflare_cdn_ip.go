@@ -2,7 +2,6 @@ package assets
 
 import (
 	_ "embed"
-
 )
 
 //go:embed cloudflare_cdn_ipv4.txt
