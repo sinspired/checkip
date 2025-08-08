@@ -1,0 +1,136 @@
+package checkip
+
+import (
+	"net/http"
+	"os"
+	"regexp"
+	"testing"
+
+	"github.com/sinspired/checkip/internal/assets"
+)
+
+func TestGetProxyCountryInfo(t *testing.T) {
+	// 设置测试环境变量
+	os.Setenv("TESTING", "1")
+	defer os.Unsetenv("TESTING")
+	
+	client := &http.Client{}
+	db, err := assets.OpenMaxMindDB()
+	if err != nil {
+		t.Fatalf("打开 MaxMind 数据库失败: %v", err)
+	}
+	defer db.Close()
+
+	loc, ip, countryCode_tag, err := GetProxyCountryMixed(client, db)
+	if err != nil {
+		t.Errorf("获取代理国家信息失败: %v", err)
+	} else {
+		t.Logf("位置: %s, IP: %s, 标签: %s", loc, ip, countryCode_tag)
+		if loc == "" || ip == "" || countryCode_tag == "" {
+			t.Error("获取的国家信息或IP地址不完整")
+		}
+	}
+}
+func TestGetCfCdnIPRanges(t *testing.T) {
+	cfCdnIPRanges := assets.GetCfCdnIPRanges()
+	for _, ipnet := range cfCdnIPRanges["ipv4"] {
+		t.Logf("IPv4: %s", ipnet.String())
+	}
+	for _, ipnet := range cfCdnIPRanges["ipv6"] {
+		t.Logf("IPv6: %s", ipnet.String())
+	}
+	if len(cfCdnIPRanges["ipv4"]) == 0 || len(cfCdnIPRanges["ipv6"]) == 0 {
+		t.Error("Cloudflare CDN IP 段加载失败")
+	}
+}
+
+func TestGetGeoIP(t *testing.T) {
+	client := &http.Client{}
+	for _, url := range geoAPIs {
+		geo, err := GetGeoIP(client, url)
+		t.Logf("URL: %s, Country: %s, IPv4: %s, IPv6: %s, IsCDN: %v", url, geo.CountryCode, geo.IPv4, geo.IPv6, geo.IsCDN)
+		if err != nil {
+			t.Errorf("%s 获取 GeoIP 失败: %v", url, err)
+		}
+		if geo.CountryCode == "" || (geo.IPv4 == "" && geo.IPv6 == "") {
+			t.Errorf("%s 获取 GeoIP 不完整", url)
+		}
+	}
+}
+
+func TestCheckCDN(t *testing.T) {
+	// 测试 Cloudflare IPv4
+	ipInfo4 := &IPData{IPv4: "104.28.163.56"}
+	isCDN4 := checkCDN(ipInfo4)
+	t.Logf("IPv4 IsCDN: %v", isCDN4)
+	if !isCDN4 {
+		t.Error("IPv4 CDN 检测失败")
+	}
+	// 一个非cf cdn 的 IPv4 地址
+	ipInfo4 = &IPData{IPv4: "45.65.122.98"}
+	isCDN4 = checkCDN(ipInfo4)
+	t.Logf("IPv4 IsCDN: %v", isCDN4)
+	if isCDN4 {
+		t.Error("IPv4 CDN 检测失败")
+	}
+	// 测试 Cloudflare IPv6（如有）
+	ipInfo6 := &IPData{IPv6: "2606:4700:3037::ac43:bd3a"}
+	isCDN6 := checkCDN(ipInfo6)
+	t.Logf("IPv6 IsCDN: %v", isCDN6)
+}
+func TestGetIPFromJSON(t *testing.T) {
+	jsonStr := `{"ip":"8.8.8.8","country_code":"US"}`
+	ipv4, ipv6 := getIPFromJSON([]byte(jsonStr))
+	t.Logf("IPv4: %s, IPv6: %s", ipv4, ipv6)
+	if ipv4 != "8.8.8.8" {
+		t.Error("getIPFromJSON 解析失败")
+	}
+}
+
+func TestGetIP_HTML(t *testing.T) {
+	// 模拟 HTML 响应
+	body := `<html><body>Current IP Address: 8.8.8.8</body></html>`
+	ipv4Re := `Current IP Address: ([\d\.]+)`
+	ip := ""
+	if matches := regexp.MustCompile(ipv4Re).FindStringSubmatch(body); len(matches) > 1 {
+		ip = matches[1]
+	}
+	t.Logf("HTML解析IP: %s", ip)
+	if ip != "8.8.8.8" {
+		t.Error("HTML IP 解析失败")
+	}
+}
+
+func TestGetExitIP(t *testing.T) {
+	client := &http.Client{}
+	for _, url := range ipAPIs {
+		ipInfo, err := getExitIP(client, url)
+		t.Logf("URL: %s, IPInfo: %+v", url, ipInfo)
+		if err == nil && ipInfo.IPv4 == "" && ipInfo.IPv6 == "" {
+			t.Error("未能获取有效IP")
+		}
+	}
+}
+
+func TestGetMaxMindData(t *testing.T) {
+	// 设置测试环境变量
+	os.Setenv("TESTING", "1")
+	defer os.Unsetenv("TESTING")
+	
+	db, err := assets.OpenMaxMindDB()
+	if err != nil {
+		t.Fatalf("打开 MaxMind 数据库失败: %v", err)
+	}
+	defer db.Close()
+
+	ip := "193.124.46.41"
+	countryCode, err := GetMaxMindData(db, ip)
+	if err != nil {
+		t.Errorf("获取 MaxMind 数据失败: %v", err)
+	} else {
+		t.Logf("IP: %s, Country Code: %s", ip, countryCode)
+		if countryCode == "" {
+			t.Error("未能获取有效国家代码")
+		}
+	}
+}

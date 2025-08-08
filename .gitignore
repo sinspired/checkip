@@ -28,5 +28,29 @@ go.work.sum
 .env
 
 # Editor/IDE
-# .idea/
-# .vscode/
+.idea/
+.vscode/
+
+# Build artifacts
+build/
+dist/
+
+# Database files
+*.mmdb
+*.mmdb.zst
+
+# Log files
+*.log
+
+# Temporary files
+tmp/
+temp/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

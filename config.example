@@ -1,0 +1,16 @@
+# CheckIP 环境变量配置示例
+
+# 服务器配置
+ADDR=:8099
+PORT=8099
+
+# 数据库配置
+MAXMIND_DB_PATH=/path/to/GeoLite2-Country.mmdb
+CF_CIDR_PATH=/path/to/cloudflare_cidrs.txt
+
+# HTTP 客户端配置
+HTTP_TIMEOUT=10s
+MAX_RETRIES=3
+
+# 日志配置
+LOG_LEVEL=info 
