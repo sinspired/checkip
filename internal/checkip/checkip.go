@@ -154,11 +154,24 @@ func GetGeoIPData(httpClient *http.Client, db *maxminddb.Reader) (geoData GeoIPD
 	return GetGeoIPDataWithContext(ctx, httpClient, db)
 }
 
+// shuffleStringSlice 对字符串切片进行乱序
+func shuffleStringSlice(src []string) []string {
+	dst := make([]string, len(src))
+	copy(dst, src)
+	for i := len(dst) - 1; i > 0; i-- {
+		j := int(time.Now().UnixNano() % int64(i+1))
+		dst[i], dst[j] = dst[j], dst[i]
+	}
+	return dst
+}
+
 // GetGeoIPDataWithContext 带 context 的版本
 func GetGeoIPDataWithContext(ctx context.Context, httpClient *http.Client, db *maxminddb.Reader) (geoData GeoIPData, err error) {
 	var ipData IPData
 	// 1. 优先：使用 ipAPI 获取出口 IP，然后用本地 MaxMind 查询国家代码
-	for _, url := range ipAPIs {
+	// 打乱 ipAPIs 顺序
+	shuffledAPIs := shuffleStringSlice(ipAPIs)
+	for _, url := range shuffledAPIs {
 		select {
 		case <-ctx.Done():
 			return GeoIPData{}, ctx.Err()
@@ -201,7 +214,9 @@ func GetGeoIPDataWithContext(ctx context.Context, httpClient *http.Client, db *m
 	}
 
 	// 2. 如果 ipAPI + MaxMind 失败，使用 geoAPI 获取地理位置
-	for _, url := range geoAPIs {
+	// 打乱 geoAPIs 顺序
+	shuffledGeoAPIs := shuffleStringSlice(geoAPIs)
+	for _, url := range shuffledGeoAPIs {
 		select {
 		case <-ctx.Done():
 			return GeoIPData{}, ctx.Err()

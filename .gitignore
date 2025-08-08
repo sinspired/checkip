@@ -37,7 +37,6 @@ dist/
 
 # Database files
 *.mmdb
-*.mmdb.zst
 
 # Log files
 *.log
