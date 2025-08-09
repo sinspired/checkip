@@ -1,5 +1,5 @@
 // internal/checkip/cloudflare.go
-package checkip
+package ipinfo
 
 import (
 	"context"
@@ -13,14 +13,8 @@ import (
 	"time"
 
 	"github.com/metacubex/mihomo/common/convert"
+	"github.com/sinspired/checkip/internal/config"
 )
-
-var cfCdnAPIs = []string{
-	"https://www.cloudflare.com",
-	"https://api.ipify.org",
-	"https://ip.122911.xyz",
-	"https://iplark.com",
-}
 
 // 请求头，避免被 ban
 func cfCommonHeaders() map[string]string {
@@ -133,7 +127,7 @@ func FetchCFProxyWithContext(ctx context.Context, httpClient *http.Client) (stri
 	var once sync.Once
 
 	var wg sync.WaitGroup
-	for _, url := range cfCdnAPIs {
+	for _, url := range config.CF_CDN_APIS {
 		wg.Add(1)
 
 		go func(url string) {

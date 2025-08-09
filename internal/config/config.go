@@ -15,7 +15,6 @@ type Config struct {
 
 	// 数据库配置
 	MaxMindDBPath string
-	CFCIDRPath    string
 
 	// HTTP 客户端配置
 	HTTPTimeout time.Duration
@@ -31,7 +30,6 @@ func Load() *Config {
 		Addr:          getEnv("ADDR", ":8099"),
 		Port:          getEnvAsInt("PORT", 8099),
 		MaxMindDBPath: getEnv("MAXMIND_DB_PATH", ""),
-		CFCIDRPath:    getEnv("CF_CIDR_PATH", ""),
 		HTTPTimeout:   getEnvAsDuration("HTTP_TIMEOUT", 10*time.Second),
 		MaxRetries:    getEnvAsInt("MAX_RETRIES", 3),
 		LogLevel:      getEnv("LOG_LEVEL", "info"),

@@ -1,4 +1,4 @@
-package assets
+package data
 
 import (
 	_ "embed"

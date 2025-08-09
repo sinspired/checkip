@@ -6,7 +6,6 @@ PORT=8099
 
 # 数据库配置
 MAXMIND_DB_PATH=/path/to/GeoLite2-Country.mmdb
-CF_CIDR_PATH=/path/to/cloudflare_cidrs.txt
 
 # HTTP 客户端配置
 HTTP_TIMEOUT=10s

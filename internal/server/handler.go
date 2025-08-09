@@ -1,5 +1,4 @@
-// api/checkip.go
-package api
+package server
 
 import (
 	"encoding/json"
@@ -7,11 +6,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/sinspired/checkip/internal/checkip"
+	"github.com/sinspired/checkip/internal/resolver"
 )
 
 type Handler struct {
-	Checker *checkip.Checker
+	Resolver *resolver.Resolver
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -27,7 +26,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// /api 或 /api/ip - 获取当前 IP
 		if path == "" {
 			// /api - 获取当前 IP 的完整信息
-			res, err := h.Checker.GetCurrentIPInfo()
+			res, err := h.Resolver.GetCurrentIPInfo()
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -35,7 +34,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(res)
 		} else {
 			// /api/ip - 仅返回 IP 地址
-			ip, err := h.Checker.GetCurrentIP()
+			ip, err := h.Resolver.GetCurrentIP()
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -65,7 +64,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		res, err := h.Checker.Check(targetIP)
+		res, err := h.Resolver.Resolve(targetIP)
 		if err != nil {
 			// 所有错误都返回 400 Bad Request，避免 500
 			http.Error(w, err.Error(), http.StatusBadRequest)

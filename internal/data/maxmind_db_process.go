@@ -1,5 +1,5 @@
 // internal/assets/maxmind_db_process.go
-package assets
+package data
 
 import (
 	"bytes"

@@ -1,13 +1,11 @@
 // internal/assets/cloudflare_cdn_ip_process.go
-package assets
+package data
 
 import (
 	"bufio"
-	"fmt"
 	"log"
 	"log/slog"
 	"net"
-	"os"
 	"strings"
 	"sync"
 )
@@ -18,7 +16,8 @@ var (
 	loadError     error
 )
 
-func loadCfCdnIPRanges() {
+// readCdnIPsRanges 读取嵌入的 Cloudflare CDN IP 范围
+func readCdnIPsRanges() {
 	cfCdnIPRanges = make(map[string][]*net.IPNet)
 	ipContents := map[string]string{
 		"ipv4": embeddedIPv4,
@@ -68,8 +67,9 @@ func loadCfCdnIPRanges() {
 		slog.Int("total_loaded", totalLoaded))
 }
 
+// GetCfCdnIPRanges 一次性加载 Cloudflare CDN IP 范围
 func GetCfCdnIPRanges() map[string][]*net.IPNet {
-	loadOnce.Do(loadCfCdnIPRanges)
+	loadOnce.Do(readCdnIPsRanges)
 
 	if loadError != nil {
 		slog.Debug("Error loading CDN IP ranges", slog.Any("error", loadError))
@@ -82,53 +82,4 @@ func GetCfCdnIPRanges() map[string][]*net.IPNet {
 	}
 
 	return cfCdnIPRanges
-}
-
-// LoadCloudflareCIDRs 加载 Cloudflare CIDR 范围
-func LoadCloudflareCIDRs(path string) (map[string][]*net.IPNet, error) {
-	// 如果路径为空，使用嵌入的数据
-	if path == "" {
-		cfCdnIPRanges := GetCfCdnIPRanges()
-		if cfCdnIPRanges == nil {
-			return nil, fmt.Errorf("failed to load embedded Cloudflare CIDRs")
-		}
-		return cfCdnIPRanges, nil
-	}
-
-	// 从文件加载
-	file, err := os.Open(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open CIDR file: %w", err)
-	}
-	defer file.Close()
-
-	cfCdnIPRanges := make(map[string][]*net.IPNet)
-	scanner := bufio.NewScanner(file)
-
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" || strings.HasPrefix(line, "#") {
-			continue
-		}
-
-		_, ipNet, err := net.ParseCIDR(line)
-		if err != nil {
-			slog.Debug("Failed to parse CIDR", slog.String("line", line), slog.Any("error", err))
-			continue
-		}
-
-		// 判断是 IPv4 还是 IPv6
-		version := "ipv4"
-		if strings.Contains(line, ":") {
-			version = "ipv6"
-		}
-
-		cfCdnIPRanges[version] = append(cfCdnIPRanges[version], ipNet)
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("error reading CIDR file: %w", err)
-	}
-
-	return cfCdnIPRanges, nil
 }
