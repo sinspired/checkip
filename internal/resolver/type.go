@@ -1,17 +1,17 @@
 package resolver
 
 import (
-	"net"
 	"net/http"
 
 	"github.com/oschwald/maxminddb-golang/v2"
+	"github.com/sinspired/checkip/pkg/ipinfo"
 )
 
 // Resolver 提供 IP 检查功能
 type Resolver struct {
-	cfCdnRanges map[string][]*net.IPNet
-	geoDB       *maxminddb.Reader
-	httpClient  *http.Client
+	cli        *ipinfo.Client
+	httpClient *http.Client
+	geoDB      *maxminddb.Reader
 }
 
 // ResolveResult 表示检查结果

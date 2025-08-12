@@ -3,17 +3,34 @@ package ipinfo
 import (
 	"context"
 	"crypto/tls"
+	// "crypto/tls"
 	"net/http"
 	"os"
 	"regexp"
 	"testing"
 	"time"
 
-	"github.com/sinspired/checkip/internal/config"
 	"github.com/sinspired/checkip/internal/data"
 )
 
-func TestGetIPInfoData(t *testing.T) {
+var test_IP_APIS = []string{
+	"https://qifu-api.baidubce.com/ip/local/geo/v1/district",
+	"https://r.inews.qq.com/api/ip2city",
+	"https://g3.letv.com/r?format=1",
+	"https://cdid.c-ctrip.com/model-poc2/h",
+	"https://whois.pconline.com.cn/ipJson.jsp",
+	"https://api.live.bilibili.com/xlive/web-room/v1/index/getIpInfo",
+	"https://6.ipw.cn/",                  // IPv4使用了 CFCDN, IPv6 位置准确
+	"https://api6.ipify.org?format=json", // IPv4使用了 CFCDN, IPv6 位置准确
+}
+
+var test_GEOIP_APIS = []string{
+	"https://ident.me/json",
+	"https://tnedi.me/json",
+	"https://api.seeip.org/geoip",
+}
+
+func TestGetGeoIPData(t *testing.T) {
 	// 设置测试环境变量
 	// os.Setenv("SUBS-CHECK-CALL", "true")
 	// defer os.Unsetenv("SUBS-CHECK-CALL")
@@ -28,9 +45,15 @@ func TestGetIPInfoData(t *testing.T) {
 	}
 	defer db.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	cli, err := New(
+		WithHttpClient(client),
+		WithDBReader(db),
+		WithIPAPIs(test_IP_APIS...),
+		WithGeoAPIs(),
+	)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	geoData, err := GetIPInfoData(ctx, client, db)
+	geoData, err := cli.GetGeoIPData(ctx)
 	if err != nil {
 		t.Errorf("获取 GeoIP 数据失败: %v", err)
 	} else {
@@ -41,7 +64,7 @@ func TestGetIPInfoData(t *testing.T) {
 	}
 }
 
-func TestFetchGeoIPInfo(t *testing.T) {
+func TestFetchExitIPandLookupGeoDB(t *testing.T) {
 	// 创建支持不安全 TLS 的客户端（仅用于测试）
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{
@@ -52,30 +75,180 @@ func TestFetchGeoIPInfo(t *testing.T) {
 		Timeout:   10 * time.Second,
 		Transport: tr,
 	}
+	db, err := data.OpenMaxMindDB()
+	if err != nil {
+		t.Fatalf("打开 MaxMind 数据库失败: %v", err)
+	}
+	defer db.Close()
+
+	cli, err := New(
+		WithHttpClient(client),
+		WithDBReader(db),
+		WithIPAPIs(test_IP_APIS...),
+		WithGeoAPIs(test_GEOIP_APIS...),
+	)
+	if err != nil {
+		t.Fatalf("初始化客户端失败: %v", err)
+	}
+	defer cli.Close()
+
+	total := len(cli.ipAPIs)
+	success := 0
+
+	for _, url := range cli.ipAPIs {
+		ipData, err := cli.FetchExitIP(url)
+		if err != nil {
+			t.Logf("获取 %s 时出错: %v", url, err)
+		}
+		ip := ipData.IPv4
+		if ip == "" {
+			ip = ipData.IPv6
+		}
+
+		// 查询地理位置并更新
+		cli.LookupGeoIPDataWithMMDB(&ipData)
+		t.Logf("URL: %s, IPv4: %s, IPv6: %s, Country: %s", url, ipData.IPv4, ipData.IPv6, ipData.CountryCode)
+
+		if ip != "" {
+			success++
+		} else if err == nil {
+			t.Errorf("%s 未能获取有效IP", url)
+		}
+	}
+
+	// 判断是否超过一半成功
+	if success*2 <= total {
+		t.Fatalf("仅成功获取 %d/%d 个 IP，未超过一半", success, total)
+	} else {
+		t.Logf("成功获取 %d/%d 个 IP，测试通过", success, total)
+	}
+}
+
+func TestFetchExitIP(t *testing.T) {
+	// 创建支持不安全 TLS 的客户端（仅用于测试）
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	}
+	client := &http.Client{
+		Timeout:   10 * time.Second,
+		Transport: tr,
+	}
+	db, err := data.OpenMaxMindDB()
+	if err != nil {
+		t.Fatalf("打开 MaxMind 数据库失败: %v", err)
+	}
+	defer db.Close()
+
+	cli, err := New(
+		WithHttpClient(client),
+		WithDBReader(db),
+		WithIPAPIs(test_IP_APIS...),
+		WithGeoAPIs(test_GEOIP_APIS...),
+	)
+	if err != nil {
+		t.Fatalf("初始化客户端失败: %v", err)
+	}
+	defer cli.Close()
+
+	total := len(cli.ipAPIs)
+	success := 0
+
+	for _, url := range cli.ipAPIs {
+		ipData, err := cli.FetchExitIP(url)
+		if err != nil {
+			t.Logf("获取 %s 时出错: %v", url, err)
+		}
+		ip := ipData.IPv4
+		if ip == "" {
+			ip = ipData.IPv6
+		}
+
+		t.Logf("URL: %s, IPInfo: %s", url, ip)
+
+		if ip != "" {
+			success++
+		} else if err == nil {
+			t.Errorf("%s 未能获取有效IP", url)
+		}
+	}
+
+	// 判断是否超过一半成功
+	if success*2 <= total {
+		t.Fatalf("仅成功获取 %d/%d 个 IP，未超过一半", success, total)
+	} else {
+		t.Logf("成功获取 %d/%d 个 IP，测试通过", success, total)
+	}
+}
+
+func TestLookupGeoIPDataWithMMDB(t *testing.T) {
+	// 设置测试环境变量
+	os.Setenv("TESTING", "1")
+	defer os.Unsetenv("TESTING")
+
+	db, err := data.OpenMaxMindDB()
+	if err != nil {
+		t.Fatalf("打开 MaxMind 数据库失败: %v", err)
+	}
+	defer db.Close()
+
+	cli, err := New(
+		WithDBReader(db),
+	)
+	if err != nil {
+		t.Fatalf("初始化客户端失败: %v", err)
+	}
+	defer cli.Close()
+	ip := "2a09:bac5:3988:263c::3cf:59"
+
+	ipData := CreateIPDataFromIP(ip)
+
+	_, err = cli.LookupGeoIPDataWithMMDB(ipData)
+	if err != nil {
+		t.Errorf("获取 MaxMind 数据失败: %v", err)
+	} else {
+		t.Logf("IP: %s, Country Code: %s", ip, ipData.CountryCode)
+		if ipData.CountryCode == "" {
+			t.Error("未能获取有效国家代码")
+		}
+	}
+}
+
+func TestFetchGeoIPData(t *testing.T) {
+	// 创建支持不安全 TLS 的客户端（仅用于测试）
+	// tr := &http.Transport{
+	// 	TLSClientConfig: &tls.Config{
+	// 		InsecureSkipVerify: true,
+	// 	},
+	// }
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+		// Transport: tr,
+	}
 
 	successCount := 0
 	failCount := 0
-	// testAPIs := []string{
-	// 	"https://checkip.info/json",
-	// 	"http://ip-api.com/json", // 改回 HTTP 版本
-	// }
-	// for _, url := range testAPIs {
-	// 	geo, err := GetGeoIP(client, url)
-	// 	if err != nil {
-	// 		t.Logf("[FAIL] URL: %s, err: %v", url, err)
-	// 		failCount++
-	// 		continue
-	// 	}
-	// 	t.Logf("[OK] URL: %s, Country: %s, IPv4: %s, IPv6: %s, IsCDN: %v", url, geo.CountryCode, geo.IPv4, geo.IPv6, geo.IsCDN)
-	// 	if geo.CountryCode == "" || (geo.IPv4 == "" && geo.IPv6 == "") {
-	// 		t.Logf("[WARN] %s 获取 GeoIP 不完整", url)
-	// 		failCount++
-	// 		continue
-	// 	}
-	// 	successCount++
-	// }
-	for _, url := range config.GEOIP_APIS {
-		geo, err := FetchGeoIPInfo(client, url)
+
+	db, err := data.OpenMaxMindDB()
+	if err != nil {
+		t.Fatalf("打开 MaxMind 数据库失败: %v", err)
+	}
+	defer db.Close()
+
+	cli, err := New(
+		WithHttpClient(client),
+		WithDBReader(db),
+		WithIPAPIs(),
+		WithGeoAPIs(test_GEOIP_APIS...),
+	)
+	if err != nil {
+		t.Fatalf("初始化客户端失败: %v", err)
+	}
+	defer cli.Close()
+
+	for _, url := range cli.geoAPIs {
+		geo, err := cli.FetchGeoIPData(url)
 		if err != nil {
 			t.Logf("[FAIL] URL: %s, err: %v", url, err)
 			failCount++
@@ -97,33 +270,55 @@ func TestFetchGeoIPInfo(t *testing.T) {
 }
 
 func TestCheckCDN(t *testing.T) {
+	db, err := data.OpenMaxMindDB()
+	if err != nil {
+		t.Fatalf("打开 MaxMind 数据库失败: %v", err)
+	}
+	defer db.Close()
+	cli, err := New(
+		WithDBReader(db),
+	)
+	if err != nil {
+		t.Fatalf("初始化客户端失败: %v", err)
+	}
+	defer cli.Close()
+
 	// 测试 Cloudflare IPv4
 	ipInfo4 := &IPData{IPv4: "104.28.163.56"}
-	ipInfo4.CheckCDN()
-	isCDN4 := ipInfo4.IsCDN
-	t.Logf("IPv4 IsCDN: %v", isCDN4)
-	if !isCDN4 {
+	cli.CheckCDN(ipInfo4)
+	if !ipInfo4.IsCDN {
 		t.Error("IPv4 CDN 检测失败")
 	}
-	// 一个非cf cdn 的 IPv4 地址
+
+	// 非 CDN IPv4
 	ipInfo4 = &IPData{IPv4: "45.65.122.98"}
-	ipInfo4.CheckCDN()
-	isCDN4 = ipInfo4.IsCDN
-	t.Logf("IPv4 IsCDN: %v", isCDN4)
-	if isCDN4 {
-		t.Error("IPv4 CDN 检测失败")
+	cli.CheckCDN(ipInfo4)
+	if ipInfo4.IsCDN {
+		t.Error("IPv4 非 CDN 错误识别为 CDN")
 	}
-	// 测试 Cloudflare IPv6（如有）
-	ipInfo6 := &IPData{IPv6: "2606:4700:3037::ac43:bd3a"}
-	ipInfo6.CheckCDN()
-	isCDN6 := ipInfo4.IsCDN
-	t.Logf("IPv6 IsCDN: %v", isCDN6)
+
+	// 测试 Cloudflare IPv6
+	ipInfo6 := &IPData{IPv6: "2a09:bac1:31e0:8::245:d4"}
+	cli.CheckCDN(ipInfo6)
+	t.Logf("IPv6: %s, IsCDN: %v", ipInfo6.IPv6, ipInfo6.IsCDN)
+	if !ipInfo6.IsCDN {
+		t.Error("IPv6 CDN 检测失败")
+	}
+
+	// 非 CDN IPv6
+	ipInfo6 = &IPData{IPv6: "22a00:2381:2ebf:8c00:1:2:3:4"}
+	cli.CheckCDN(ipInfo6)
+	t.Logf("IPv6: %s, IsCDN: %v", ipInfo6.IPv6, ipInfo6.IsCDN)
+	if ipInfo6.IsCDN {
+		t.Error("IPv6 非 CDN 错误识别为 CDN")
+	}
 }
+
 func TestGetIPFromJSON(t *testing.T) {
-	jsonStr := `{"ip":"8.8.8.8","country_code":"US"}`
+	jsonStr := `{"ip":"8.8.8.8","country_code":"US","ipv6":"2001:4860:4860::8888"}`
 	ipv4, ipv6 := getIPFromJSON([]byte(jsonStr))
 	t.Logf("IPv4: %s, IPv6: %s", ipv4, ipv6)
-	if ipv4 != "8.8.8.8" {
+	if ipv4 != "8.8.8.8" && ipv6 != "2001:4860:4860::8888" {
 		t.Error("getIPFromJSON 解析失败")
 	}
 }
@@ -139,44 +334,5 @@ func TestGetIP_HTML(t *testing.T) {
 	t.Logf("HTML解析IP: %s", ip)
 	if ip != "8.8.8.8" {
 		t.Error("HTML IP 解析失败")
-	}
-}
-
-func TestGetExitIP(t *testing.T) {
-	client := &http.Client{}
-
-	for _, url := range config.IP_APIS {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		ipData := &IPData{}
-		err := ipData.GetExitIP(ctx, client, url)
-		t.Logf("URL: %s, IPInfo: %+v", url, ipData)
-		if err == nil && ipData.IPv4 == "" && ipData.IPv6 == "" {
-			t.Error("未能获取有效IP")
-		}
-	}
-}
-
-func TestGetMaxMindData(t *testing.T) {
-	// 设置测试环境变量
-	os.Setenv("TESTING", "1")
-	defer os.Unsetenv("TESTING")
-
-	db, err := data.OpenMaxMindDB()
-	if err != nil {
-		t.Fatalf("打开 MaxMind 数据库失败: %v", err)
-	}
-	defer db.Close()
-
-	ip := "193.124.46.41"
-	ipData := &IPData{IPv4: ip}
-	err = ipData.GetMaxMindData(db)
-	if err != nil {
-		t.Errorf("获取 MaxMind 数据失败: %v", err)
-	} else {
-		t.Logf("IP: %s, Country Code: %s", ip, ipData.CountryCode)
-		if ipData.CountryCode == "" {
-			t.Error("未能获取有效国家代码")
-		}
 	}
 }

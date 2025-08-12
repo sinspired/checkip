@@ -1,13 +1,15 @@
 package ipinfo
 
 import (
+	"context"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/sinspired/checkip/internal/data"
 )
 
-func TestGetMixed(t *testing.T) {
+func TestGetAnalyzed(t *testing.T) {
 	client := &http.Client{}
 	db, err := data.OpenMaxMindDB()
 	if err != nil {
@@ -15,7 +17,15 @@ func TestGetMixed(t *testing.T) {
 	}
 	defer db.Close()
 
-	loc, ip, countryCode_tag, err := GetMixed(client, db)
+	cli, err := New(
+		WithHttpClient(client),
+		WithDBReader(db),
+		WithIPAPIs(),
+		WithGeoAPIs(),
+	)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	loc, ip, countryCode_tag, err := cli.GetAnalyzed(ctx)
 	if err != nil {
 		t.Errorf("获取代理国家信息失败: %v", err)
 	} else {

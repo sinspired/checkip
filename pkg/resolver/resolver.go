@@ -34,4 +34,3 @@ func (c *Resolver) GetCurrentIPInfo() (*resolver.ResolveResult, error) {
 func (c *Resolver) GetCurrentIP() (string, error) {
 	return c.resolver.GetCurrentIP()
 }
-

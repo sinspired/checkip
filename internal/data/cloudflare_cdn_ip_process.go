@@ -37,6 +37,16 @@ func readCdnIPsRanges() {
 				continue
 			}
 
+			if !strings.Contains(line, "/") {
+				// 为单独ipv4添加一个/32后缀
+				if version == "ipv4" {
+					// 如果是 IPv4 地址且没有 CIDR 后缀，添加 /32
+					line = line + "/32"
+				} else {
+					// 如果是 IPv6 地址且没有 CIDR 后缀，添加 /128
+					line = line + "/128"
+				}
+			}
 			_, ipNet, err := net.ParseCIDR(line)
 			if err != nil {
 				log.Printf("Warning: Failed to parse CIDR %s on line %d: %v", line, lineCount, err)
