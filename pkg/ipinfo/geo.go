@@ -53,7 +53,7 @@ func (c *Client) GetGeoIPData(resolveCtx context.Context) (info IPData, err erro
 			break
 		}
 
-		temp, e := c.FetchExitIP( url)
+		temp, e := c.FetchExitIP(url)
 		if e == nil && (temp.IPv4 != "" || temp.IPv6 != "") {
 			slog.Debug(fmt.Sprintf("%s : IPv4=%s IPv6=%s", url, temp.IPv4, temp.IPv6))
 			info = temp
@@ -75,7 +75,9 @@ func (c *Client) GetGeoIPData(resolveCtx context.Context) (info IPData, err erro
 				ip = info.IPv6
 			}
 			slog.Debug(fmt.Sprintf("MaxMind 获取到 %s 的国家代码: %s", ip, info.CountryCode))
-			return info, nil
+			if info.CountryCode != "CN" || os.Getenv("SUBS-CHECK-CALL") == "" {
+				return info, nil
+			}
 		} else if mmErr != nil {
 			slog.Debug(fmt.Sprintf("MaxMind 查询失败: %v", mmErr))
 		} else {
