@@ -32,19 +32,6 @@ func (c *Client) CheckCloudflare() (bool, string, string) {
 	return false, "", ""
 }
 
-// GetCfProxyInfo 获取 /cdn-cgi/trace 获取的 CDN 节点位置
-func (c *Client) GetCfProxyInfo(info *IPData) (cfProxyInfo CFProxyInfo) {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-	cfRelayLoc, cfRelayIP := c.FetchCFTraceFirstWithCtx(ctx)
-
-	cfProxyInfo.isCFProxy = info.IsCDN && (info.IPv4 != cfRelayIP || info.IPv6 != "")
-
-	cfProxyInfo.exitLoc = info.CountryCode
-	cfProxyInfo.cfLoc = cfRelayLoc
-	return cfProxyInfo
-}
-
 // GetCFTrace 获取 Cloudflare Trace 的 loc 和 ip,并设置 10s 超时
 func (c *Client) GetCFTrace() (string, string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

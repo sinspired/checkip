@@ -25,7 +25,7 @@ func TestGetAnalyzed(t *testing.T) {
 	)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	loc, ip, countryCode_tag, err := cli.GetAnalyzed(ctx)
+	loc, ip, countryCode_tag, err := cli.GetAnalyzed(ctx, "", "")
 	if err != nil {
 		t.Errorf("获取代理国家信息失败: %v", err)
 	} else {

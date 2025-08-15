@@ -44,7 +44,7 @@ func (r *Resolver) Resolve(ip string) (*ResolveResult, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	// 获取代理信息（仅用于当前 IP，不用于指定 IP）
-	loc, _, tag, _ := r.cli.GetAnalyzed(ctx)
+	loc, _, tag, _ := r.cli.GetAnalyzed(ctx, "", "")
 
 	result := &ResolveResult{
 		IP:          ip,
@@ -76,7 +76,7 @@ func (r *Resolver) GetCurrentIPInfo() (*ResolveResult, error) {
 	}
 
 	// 获取代理信息
-	loc, _, tag, _ := r.cli.GetAnalyzed(ctx)
+	loc, _, tag, _ := r.cli.GetAnalyzed(ctx, "", "")
 
 	result := &ResolveResult{
 		IP:          ip,
