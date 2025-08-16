@@ -36,11 +36,34 @@ func (c *Client) CheckCloudflare() (bool, string, string) {
 func (c *Client) GetCFTrace() (string, string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	return c.FetchCFTraceFirstWithCtx(ctx)
+	return c.FetchCFTraceFirst(ctx)
 }
 
-// FetchCFTraceFirstWithCtx 并发处理 FetchCFCDNTrace
-func (c *Client) FetchCFTraceFirstWithCtx(ctx context.Context) (string, string) {
+// FetchCFTraceFirst 顺序处理 FetchCFTrace，依次尝试所有候选 URL，
+// 返回首个成功的 loc/ip，如果全部失败或 ctx 被取消则返回空字符串。
+func (c *Client) FetchCFTraceFirst(ctx context.Context) (string, string) {
+	// 随机乱序,分散负载
+	shuffledCfCdnAPIs := shuffle(config.CF_CDN_APIS)
+	for _, url := range shuffledCfCdnAPIs {
+		for range 2 { // 重试 2 次
+			// 支持外部取消 / 超时
+			select {
+			case <-ctx.Done():
+				return "", ""
+			default:
+			}
+
+			loc, ip := c.FetchCFTrace(ctx, url)
+			if loc != "" && ip != "" {
+				return loc, ip
+			}
+		}
+	}
+	return "", ""
+}
+
+// FetchCFTraceFirstConcurrent 并发处理 FetchCFCDNTrace
+func (c *Client) FetchCFTraceFirstConcurrent(ctx context.Context, cancel context.CancelFunc) (string, string) {
 	type result struct {
 		loc string
 		ip  string
@@ -54,17 +77,19 @@ func (c *Client) FetchCFTraceFirstWithCtx(ctx context.Context) (string, string) 
 		wg.Add(1)
 		go func(url string) {
 			defer wg.Done()
-			select {
-			case <-ctx.Done():
-				return
-			default:
-			}
 
-			for range 3 {
+			for range 2 {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+				}
+
 				loc, ip := c.FetchCFTrace(ctx, url)
 				if loc != "" && ip != "" {
 					once.Do(func() {
 						resultChan <- result{loc, ip}
+						cancel()
 					})
 					return
 				}

@@ -49,7 +49,7 @@ func (c *Client) GetCfProxyInfo(info *IPData, cfLoc string, cfIP string) (cfProx
 	defer cancel()
 	cfRelayLoc, cfRelayIP := cfLoc, cfIP
 	if cfLoc == "" {
-		cfRelayLoc, cfRelayIP = c.FetchCFTraceFirstWithCtx(ctx)
+		cfRelayLoc, cfRelayIP = c.FetchCFTraceFirst(ctx)
 	}
 
 	cfProxyInfo.isCFProxy = info.IsCDN && (info.IPv4 != cfRelayIP || info.IPv6 != "")

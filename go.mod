@@ -1,6 +1,6 @@
 module github.com/sinspired/checkip
 
-go 1.24.6
+go 1.25
 
 require (
 	github.com/klauspost/compress v1.18.0
