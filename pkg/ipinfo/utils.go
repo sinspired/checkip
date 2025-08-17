@@ -67,9 +67,10 @@ func getIPFromJSON(b []byte) (ipv4 string, ipv6 string) {
 // apiCommonHeaders 返回通用的 API 请求头
 func apiCommonHeaders() map[string]string {
 	return map[string]string{
+		"User-Agent":      convert.RandUserAgent(),
 		"Accept":          "application/json, text/plain, */*",
 		"Accept-Language": "en-US,en;q=0.9",
-		"User-Agent":      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+		// "User-Agent":      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
 		"Cache-Control":   "no-cache",
 		"Pragma":          "no-cache",
 	}

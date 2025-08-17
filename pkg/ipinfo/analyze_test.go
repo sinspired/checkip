@@ -23,6 +23,9 @@ func TestGetAnalyzed(t *testing.T) {
 		WithIPAPIs(),
 		WithGeoAPIs(),
 	)
+	if err != nil {
+		t.Error("客户端初始化失败")
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	loc, ip, countryCode_tag, err := cli.GetAnalyzed(ctx, "", "")

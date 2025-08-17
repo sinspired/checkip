@@ -36,41 +36,54 @@ func (c *Client) CheckCloudflare() (bool, string, string) {
 func (c *Client) GetCFTrace() (string, string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	return c.FetchCFTraceFirstWithCtx(ctx)
+	return c.FetchCFTraceFirstConcurrent(ctx, cancel)
 }
 
-// FetchCFTraceFirstWithCtx 并发处理 FetchCFCDNTrace
-func (c *Client) FetchCFTraceFirstWithCtx(ctx context.Context) (string, string) {
+// FetchCFTraceFirstConcurrent 并发处理 FetchCFCDNTrace
+func (c *Client) FetchCFTraceFirstConcurrent(ctx context.Context, cancel context.CancelFunc) (string, string) {
 	type result struct {
 		loc string
 		ip  string
+	}
+
+	// 乱序 + 截取前5, 减轻网络负载
+	apis := shuffle(config.CF_CDN_APIS)
+	if len(apis) > 5 {
+		apis = apis[:5]
 	}
 
 	resultChan := make(chan result, 1)
 	var once sync.Once
 	var wg sync.WaitGroup
 
-	for _, url := range config.CF_CDN_APIS {
+	retries := 2
+
+	for _, baseURL := range apis {
 		wg.Add(1)
 		go func(url string) {
 			defer wg.Done()
-			select {
-			case <-ctx.Done():
-				return
-			default:
-			}
-
-			for range 3 {
+			for range retries {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+				}
 				loc, ip := c.FetchCFTrace(ctx, url)
 				if loc != "" && ip != "" {
 					once.Do(func() {
 						resultChan <- result{loc, ip}
+						cancel()
 					})
 					return
 				}
 			}
-		}(url)
+		}(baseURL)
 	}
+
+	go func() {
+		wg.Wait()
+		close(resultChan)
+	}()
 
 	select {
 	case r := <-resultChan:

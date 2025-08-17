@@ -51,6 +51,9 @@ func TestGetGeoIPData(t *testing.T) {
 		WithIPAPIs(test_IP_APIS...),
 		WithGeoAPIs(),
 	)
+	if err != nil {
+		t.Error("客户端初始化失败")
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	geoData, err := cli.GetGeoIPData(ctx)

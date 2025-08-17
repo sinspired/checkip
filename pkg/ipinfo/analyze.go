@@ -45,11 +45,11 @@ func (c *Client) GetAnalyzed(ctx context.Context, cfLoc string, cfIP string) (lo
 
 // GetCfProxyInfo 获取 /cdn-cgi/trace 获取的 CDN 节点位置
 func (c *Client) GetCfProxyInfo(info *IPData, cfLoc string, cfIP string) (cfProxyInfo CFProxyInfo) {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	cfRelayLoc, cfRelayIP := cfLoc, cfIP
 	if cfLoc == "" {
-		cfRelayLoc, cfRelayIP = c.FetchCFTraceFirstWithCtx(ctx)
+		cfRelayLoc, cfRelayIP = c.FetchCFTraceFirstConcurrent(ctx, cancel)
 	}
 
 	cfProxyInfo.isCFProxy = info.IsCDN && (info.IPv4 != cfRelayIP || info.IPv6 != "")
