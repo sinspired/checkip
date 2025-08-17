@@ -43,7 +43,7 @@ type Option func(*Client) error
 
 const defaultHTTPTimeout = 10 * time.Second
 
-// 默认 IPAPIs 
+// 默认 IPAPIs
 var defaultIPAPIs = []string{
 	"https://check.torproject.org/api/ip",
 	"https://qifu-api.baidubce.com/ip/local/geo/v1/district",
@@ -125,34 +125,44 @@ func New(opts ...Option) (*Client, error) {
 		}
 	}
 
-	// http client with sane default timeout
+	// httpClient 默认
 	if c.httpClient == nil {
 		c.httpClient = &http.Client{Timeout: defaultHTTPTimeout}
 	}
 
-	// mmdb: 优先使用外部 reader；否则路径；否则默认内置
+	// 初始化 mmdb
 	if c.mmdb == nil {
+		var db *maxminddb.Reader
+		var err error
 		if c.dbPath != "" {
-			db, err := maxminddb.Open(c.dbPath)
+			db, err = maxminddb.Open(c.dbPath)
 			if err != nil {
 				return nil, fmt.Errorf("open maxmind db: %w", err)
 			}
-			c.mmdb = db
-			c.ownMMDB = true
 		} else {
-			db, err := data.OpenGeoDB("")
+			db, err = data.OpenGeoDB("")
 			if err != nil {
 				return nil, fmt.Errorf("open default maxmind db: %w", err)
 			}
-			c.mmdb = db
-			c.ownMMDB = true
 		}
+		c.mmdb = db
+		c.ownMMDB = true
 	}
 
-	// defaults for APIs
-	if len(c.ipAPIs) == 0 && len(c.geoAPIs) == 0 {
+	// API 列表兜底
+	if len(c.ipAPIs) == 0 {
 		c.ipAPIs = slices.Clone(defaultIPAPIs)
+	}
+	if len(c.geoAPIs) == 0 {
 		c.geoAPIs = slices.Clone(defaultGeoAPIs)
+	}
+
+	// 最终校验
+	if len(c.ipAPIs) == 0 && len(c.geoAPIs) == 0 {
+		return nil, fmt.Errorf("no IP/Geo APIs configured")
+	}
+	if c.mmdb == nil {
+		return nil, fmt.Errorf("mmdb not initialized")
 	}
 
 	return c, nil

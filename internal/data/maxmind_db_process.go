@@ -1,110 +1,119 @@
-// internal/assets/maxmind_db_process.go
 package data
 
 import (
-	"bytes"
-	"fmt"
-	"io"
-	"os"
-	"path/filepath"
+    "bytes"
+    "fmt"
+    "io"
+    "os"
+    "path/filepath"
+    "runtime"
 
-	"github.com/klauspost/compress/zstd"
-	"github.com/oschwald/maxminddb-golang/v2"
+    "github.com/klauspost/compress/zstd"
+    "github.com/oschwald/maxminddb-golang/v2"
 )
 
-// OpenMaxMindDB 打开 MaxMind 数据库。
+// OpenMaxMindDB 打开 MaxMind 数据库（自动处理不存在时的解压）
 func OpenMaxMindDB() (*maxminddb.Reader, error) {
-	OutputPath := resolveAssetPath("maxmindDB")
-	mmdbPath := filepath.Join(OutputPath, "GeoLite2-Country.mmdb")
+    outputPath := resolveAssetPath("maxmindDB")
+    mmdbPath := filepath.Join(outputPath, "GeoLite2-Country.mmdb")
 
-	// TODO: 应定期更新数据库文件
-	if _, err := os.Stat(mmdbPath); err == nil {
-		db, err := maxminddb.Open(mmdbPath)
-		if err != nil {
-			return nil, fmt.Errorf("maxmind数据库打开失败: %w", err)
-		}
-		return db, nil
-	}
+    // 如果数据库文件不存在，则解压生成
+    if _, err := os.Stat(mmdbPath); os.IsNotExist(err) {
+        if err := ensureMMDBFile(outputPath, mmdbPath); err != nil {
+            return nil, err
+        }
+    }
 
-	zstdDecoder, err := zstd.NewReader(nil)
-	if err != nil {
-		return nil, fmt.Errorf("zstd解码器创建失败: %w", err)
-	}
-	defer zstdDecoder.Close()
-
-	// 确保目录存在
-	if err := os.MkdirAll(OutputPath, 0755); err != nil {
-		return nil, fmt.Errorf("创建数据库目录失败: %w", err)
-	}
-
-	mmdbFile, err := os.OpenFile(mmdbPath, os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		return nil, fmt.Errorf("maxmind数据库文件创建失败: %w", err)
-	}
-	defer mmdbFile.Close()
-
-	zstdDecoder.Reset(bytes.NewReader(EmbeddedMaxMindDB))
-	if _, err := io.Copy(mmdbFile, zstdDecoder); err != nil {
-		return nil, fmt.Errorf("maxmind数据库文件解压失败: %w", err)
-	}
-
-	db, err := maxminddb.Open(mmdbPath)
-	if err != nil {
-		return nil, fmt.Errorf("maxmind数据库打开失败: %w", err)
-	}
-	return db, nil
+    return openDBWithArch(mmdbPath)
 }
 
-func resolveAssetPath(subDir string) string {
-	// 在测试环境中，使用临时目录
-	if os.Getenv("TESTING") == "1" {
-		return os.TempDir()
-	}
-
-	// 优先尝试获取可执行文件路径
-	exePath, err := os.Executable()
-	if err == nil {
-		exeDir := filepath.Dir(exePath)
-		// 检查路径是否有效
-		if _, err := os.Stat(exeDir); err == nil {
-			assetPath := filepath.Join(exeDir, "assets", subDir)
-			// 尝试创建目录以验证权限
-			if err := os.MkdirAll(assetPath, 0755); err == nil {
-				return assetPath
-			}
-		}
-	}
-
-	// 如果可执行文件路径不可用，尝试当前工作目录
-	if cwd, err := os.Getwd(); err == nil {
-		assetPath := filepath.Join(cwd, "assets", subDir)
-		if err := os.MkdirAll(assetPath, 0755); err == nil {
-			return assetPath
-		}
-	}
-
-	// 最后的回退方案：使用临时目录
-	tempDir := os.TempDir()
-	assetPath := filepath.Join(tempDir, "checkip", "assets", subDir)
-	if err := os.MkdirAll(assetPath, 0755); err == nil {
-		return assetPath
-	}
-
-	// 如果所有方法都失败，返回一个基本路径
-	return filepath.Join("assets", subDir)
-}
-
-// OpenGeoDB 打开地理数据库
+// OpenGeoDB 打开指定路径的地理数据库（空路径则使用默认）
 func OpenGeoDB(path string) (*maxminddb.Reader, error) {
-	if path == "" {
-		// 使用嵌入的数据库
-		return OpenMaxMindDB()
-	}
+    if path == "" {
+        return OpenMaxMindDB()
+    }
+    return openDBWithArch(path)
+}
 
-	// 使用指定的路径
-	db, err := maxminddb.Open(path)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open geo database: %w", err)
-	}
-	return db, nil
+// 根据架构选择合适的打开方式
+func openDBWithArch(path string) (*maxminddb.Reader, error) {
+    if runtime.GOARCH == "386" {
+        return openFromBytes(path)
+    }
+    db, err := maxminddb.Open(path)
+    if err != nil {
+        return nil, fmt.Errorf("maxmind数据库打开失败: %w", err)
+    }
+    return db, nil
+}
+
+// 确保数据库文件存在，不存在则从嵌入数据解压生成
+func ensureMMDBFile(outputPath, mmdbPath string) error {
+    if err := os.MkdirAll(outputPath, 0755); err != nil {
+        return fmt.Errorf("创建数据库目录失败: %w", err)
+    }
+
+    zstdDecoder, err := zstd.NewReader(nil)
+    if err != nil {
+        return fmt.Errorf("zstd解码器创建失败: %w", err)
+    }
+    defer zstdDecoder.Close()
+
+    file, err := os.OpenFile(mmdbPath, os.O_CREATE|os.O_WRONLY, 0644)
+    if err != nil {
+        return fmt.Errorf("maxmind数据库文件创建失败: %w", err)
+    }
+    defer file.Close()
+
+    zstdDecoder.Reset(bytes.NewReader(EmbeddedMaxMindDB))
+    if _, err := io.Copy(file, zstdDecoder); err != nil {
+        return fmt.Errorf("maxmind数据库文件解压失败: %w", err)
+    }
+    return nil
+}
+
+// 解析 assets 路径
+func resolveAssetPath(subDir string) string {
+    if os.Getenv("TESTING") == "1" {
+        return os.TempDir()
+    }
+
+    if exePath, err := os.Executable(); err == nil {
+        exeDir := filepath.Dir(exePath)
+        if _, err := os.Stat(exeDir); err == nil {
+            path := filepath.Join(exeDir, "assets", subDir)
+            if os.MkdirAll(path, 0755) == nil {
+                return path
+            }
+        }
+    }
+
+    if cwd, err := os.Getwd(); err == nil {
+        path := filepath.Join(cwd, "assets", subDir)
+        if os.MkdirAll(path, 0755) == nil {
+            return path
+        }
+    }
+
+    path := filepath.Join(os.TempDir(), "checkip", "assets", subDir)
+    if os.MkdirAll(path, 0755) == nil {
+        return path
+    }
+
+    return filepath.Join("assets", subDir)
+}
+
+// 32位系统从内存读取数据库
+func openFromBytes(path string) (*maxminddb.Reader, error) {
+    runtime.GC() // 主动GC，释放内存
+
+    data, err := os.ReadFile(path)
+    if err != nil {
+        return nil, fmt.Errorf("读取文件到内存失败: %w", err)
+    }
+    reader, err := maxminddb.FromBytes(data)
+    if err != nil {
+        return nil, fmt.Errorf("从字节数组创建reader失败: %w", err)
+    }
+    return reader, nil
 }
