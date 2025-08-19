@@ -28,6 +28,12 @@ func (c *Client) GetAnalyzed(ctx context.Context, cfLoc string, cfIP string) (lo
 	if ip == "" {
 		ip = ipData.IPv6
 	}
+
+	// CN 不需要判断 CF Proxy
+	if ipData.CountryCode == "CN" {
+		return ipData.ContinentCode, ip, "Local ISP", nil
+	}
+
 	cfProxyInfo := c.GetCfProxyInfo(&ipData, cfLoc, cfIP)
 	if cfProxyInfo.isCFProxy {
 		if cfProxyInfo.cfLoc == "" {

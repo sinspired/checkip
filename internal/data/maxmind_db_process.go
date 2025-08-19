@@ -15,7 +15,7 @@ import (
 // OpenMaxMindDB 打开 MaxMind 数据库（自动处理不存在时的解压）
 func OpenMaxMindDB() (*maxminddb.Reader, error) {
     outputPath := resolveAssetPath("maxmindDB")
-    mmdbPath := filepath.Join(outputPath, "GeoLite2-Country.mmdb")
+    mmdbPath := filepath.Join(outputPath, "GeoLite2-City.mmdb")
 
     // 如果数据库文件不存在，则解压生成
     if _, err := os.Stat(mmdbPath); os.IsNotExist(err) {
@@ -65,7 +65,7 @@ func ensureMMDBFile(outputPath, mmdbPath string) error {
     }
     defer file.Close()
 
-    zstdDecoder.Reset(bytes.NewReader(EmbeddedMaxMindDB))
+    zstdDecoder.Reset(bytes.NewReader(EmbeddedMaxMindDBCity))
     if _, err := io.Copy(file, zstdDecoder); err != nil {
         return fmt.Errorf("maxmind数据库文件解压失败: %w", err)
     }

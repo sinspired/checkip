@@ -4,5 +4,5 @@ import (
 	_ "embed"
 )
 
-//go:embed GeoLite2-Country.mmdb.zst
-var EmbeddedMaxMindDB []byte
+//go:embed GeoLite2-City.mmdb.zst
+var EmbeddedMaxMindDBCity []byte

@@ -228,6 +228,7 @@ func (c *Client) LookupGeoIPDataWithMMDB(info *IPData) (string, error) {
 	if c.mmdb == nil {
 		return "", fmt.Errorf("MaxMind 数据库未初始化")
 	}
+
 	ip := info.IPv4
 	if ip == "" {
 		ip = info.IPv6
@@ -236,14 +237,54 @@ func (c *Client) LookupGeoIPDataWithMMDB(info *IPData) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("无效的 IP 地址: %s", ip)
 	}
-	var countryCode string
-	if err := c.mmdb.Lookup(ipAddr).DecodePath(&countryCode, "country", "iso_code"); err != nil {
+
+	var rec struct {
+		Country struct {
+			ISOCode string            `maxminddb:"iso_code"`
+			Names   map[string]string `maxminddb:"names"`
+		} `maxminddb:"country"`
+		Continent struct {
+			Code string `maxminddb:"code"`
+		} `maxminddb:"continent"`
+		City struct {
+			Names map[string]string `maxminddb:"names"`
+		} `maxminddb:"city"`
+		Subdivisions []struct {
+			ISOCode string            `maxminddb:"iso_code"`
+			Names   map[string]string `maxminddb:"names"`
+		} `maxminddb:"subdivisions"`
+		Postal struct {
+			Code string `maxminddb:"code"`
+		} `maxminddb:"postal"`
+		Location struct {
+			Latitude  float64 `maxminddb:"latitude"`
+			Longitude float64 `maxminddb:"longitude"`
+			TimeZone  string  `maxminddb:"time_zone"`
+			// AccuracyRadius uint16  `maxminddb:"accuracy_radius"`
+		} `maxminddb:"location"`
+	}
+
+	if err := c.mmdb.Lookup(ipAddr).Decode(&rec); err != nil {
 		return "", err
 	}
-	if countryCode != "" {
-		info.CountryCode = strings.ToUpper(countryCode)
+
+	info.CountryCode = strings.ToUpper(rec.Country.ISOCode)
+	info.CountryName = rec.Country.Names["en"]
+	info.ContinentCode = strings.ToUpper(rec.Continent.Code)
+	info.City = rec.City.Names["en"]
+
+	if len(rec.Subdivisions) > 0 {
+		info.Region = rec.Subdivisions[0].Names["en"]
+		info.RegionCode = strings.ToUpper(rec.Subdivisions[0].ISOCode)
 	}
-	return countryCode, nil
+
+	info.PostalCode = rec.Postal.Code
+	info.Latitude = rec.Location.Latitude
+	info.Longitude = rec.Location.Longitude
+	info.TimeZone = rec.Location.TimeZone
+	// info.AccuracyRadius = rec.Location.AccuracyRadius
+
+	return info.CountryCode, nil
 }
 
 // FetchGeoIPData 从指定的 URL 获取地理位置信息

@@ -12,10 +12,20 @@ import (
 
 // IPData 存储 IP 地址、CDN、国家代码
 type IPData struct {
-	IPv4        string
-	IPv6        string
-	IsCDN       bool
-	CountryCode string
+	IPv4          string
+	IPv6          string
+	IsCDN         bool
+	CountryCode   string // 国家代码（ISO）
+	CountryName   string // 国家英文全称
+	ContinentCode string
+	City          string
+	Region        string // 第一层行政区名称（省/州）
+	RegionCode    string // 第一层行政区 ISO 代码
+	PostalCode    string
+
+	TimeZone  string
+	Latitude  float64
+	Longitude float64
 }
 
 // CFProxyInfo 存储 cloudflare CDN信息

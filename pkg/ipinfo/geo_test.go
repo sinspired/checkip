@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	// "crypto/tls"
 	"net/http"
-	"os"
 	"regexp"
 	"testing"
 	"time"
@@ -186,10 +185,6 @@ func TestFetchExitIP(t *testing.T) {
 }
 
 func TestLookupGeoIPDataWithMMDB(t *testing.T) {
-	// 设置测试环境变量
-	os.Setenv("TESTING", "1")
-	defer os.Unsetenv("TESTING")
-
 	db, err := data.OpenMaxMindDB()
 	if err != nil {
 		t.Fatalf("打开 MaxMind 数据库失败: %v", err)
@@ -211,7 +206,7 @@ func TestLookupGeoIPDataWithMMDB(t *testing.T) {
 	if err != nil {
 		t.Errorf("获取 MaxMind 数据失败: %v", err)
 	} else {
-		t.Logf("IP: %s, Country Code: %s", ip, ipData.CountryCode)
+		t.Logf("IP: %s, Country Code: %s, City: %s", ip, ipData.CountryCode, ipData.City)
 		if ipData.CountryCode == "" {
 			t.Error("未能获取有效国家代码")
 		}
