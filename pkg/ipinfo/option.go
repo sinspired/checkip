@@ -150,7 +150,7 @@ func New(opts ...Option) (*Client, error) {
 				return nil, fmt.Errorf("open maxmind db: %w", err)
 			}
 		} else {
-			db, err = data.OpenGeoDB("")
+			db, err = data.OpenMaxMindDB("")
 			if err != nil {
 				return nil, fmt.Errorf("open default maxmind db: %w", err)
 			}

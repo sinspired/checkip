@@ -38,7 +38,7 @@ func TestGetGeoIPData(t *testing.T) {
 		Timeout: 10 * time.Second,
 	}
 
-	db, err := data.OpenMaxMindDB()
+	db, err := data.OpenMaxMindDB("")
 	if err != nil {
 		t.Fatalf("打开 MaxMind 数据库失败: %v", err)
 	}
@@ -77,7 +77,7 @@ func TestFetchExitIPandLookupGeoDB(t *testing.T) {
 		Timeout:   10 * time.Second,
 		Transport: tr,
 	}
-	db, err := data.OpenMaxMindDB()
+	db, err := data.OpenMaxMindDB("")
 	if err != nil {
 		t.Fatalf("打开 MaxMind 数据库失败: %v", err)
 	}
@@ -137,7 +137,7 @@ func TestFetchExitIP(t *testing.T) {
 		Timeout:   10 * time.Second,
 		Transport: tr,
 	}
-	db, err := data.OpenMaxMindDB()
+	db, err := data.OpenMaxMindDB("")
 	if err != nil {
 		t.Fatalf("打开 MaxMind 数据库失败: %v", err)
 	}
@@ -185,7 +185,7 @@ func TestFetchExitIP(t *testing.T) {
 }
 
 func TestLookupGeoIPDataWithMMDB(t *testing.T) {
-	db, err := data.OpenMaxMindDB()
+	db, err := data.OpenMaxMindDB("")
 	if err != nil {
 		t.Fatalf("打开 MaxMind 数据库失败: %v", err)
 	}
@@ -228,7 +228,7 @@ func TestFetchGeoIPData(t *testing.T) {
 	successCount := 0
 	failCount := 0
 
-	db, err := data.OpenMaxMindDB()
+	db, err := data.OpenMaxMindDB("")
 	if err != nil {
 		t.Fatalf("打开 MaxMind 数据库失败: %v", err)
 	}
@@ -268,7 +268,7 @@ func TestFetchGeoIPData(t *testing.T) {
 }
 
 func TestCheckCDN(t *testing.T) {
-	db, err := data.OpenMaxMindDB()
+	db, err := data.OpenMaxMindDB("")
 	if err != nil {
 		t.Fatalf("打开 MaxMind 数据库失败: %v", err)
 	}

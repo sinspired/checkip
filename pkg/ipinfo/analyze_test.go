@@ -11,7 +11,7 @@ import (
 
 func TestGetAnalyzed(t *testing.T) {
 	client := &http.Client{}
-	db, err := data.OpenMaxMindDB()
+	db, err := data.OpenMaxMindDB("")
 	if err != nil {
 		t.Fatalf("打开 MaxMind 数据库失败: %v", err)
 	}
