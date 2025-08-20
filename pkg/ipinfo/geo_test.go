@@ -13,6 +13,7 @@ import (
 )
 
 var test_IP_APIS = []string{
+	"https://ip.122911.xyz/api/ipinfo",
 	"https://qifu-api.baidubce.com/ip/local/geo/v1/district",
 	"https://r.inews.qq.com/api/ip2city",
 	"https://g3.letv.com/r?format=1",
@@ -24,6 +25,7 @@ var test_IP_APIS = []string{
 }
 
 var test_GEOIP_APIS = []string{
+	"https://ip.122911.xyz/api/ipinfo",
 	"https://ident.me/json",
 	"https://tnedi.me/json",
 	"https://api.seeip.org/geoip",
