@@ -27,107 +27,111 @@ func (c *Client) GetGeoIPData(resolveCtx context.Context) (info IPData, err erro
 	}
 
 	// 1) ipAPI 获取 IP
-	shuffledIPAPIs := shuffle(c.ipAPIs)
+	if len(c.ipAPIs) > 0 {
+		shuffledIPAPIs := shuffle(c.ipAPIs)
 
-	// 若已收到停止信号，则只尝试前三个；否则全部尝试
-	if stopped && len(shuffledIPAPIs) > 3 {
-		shuffledIPAPIs = shuffledIPAPIs[:3]
-	}
+		// 若已收到停止信号，则只尝试前三个；否则全部尝试
+		if stopped && len(shuffledIPAPIs) > 3 {
+			shuffledIPAPIs = shuffledIPAPIs[:3]
+		}
 
-	// 当运行过程中收到停止信号时，从“检测到停止”的那一刻起，最多再尝试 3 次
-	ipAPIsAttemptsSinceStop := 0
+		// 当运行过程中收到停止信号时，从“检测到停止”的那一刻起，最多再尝试 3 次
+		ipAPIsAttemptsSinceStop := 0
 
-	for _, url := range shuffledIPAPIs {
-		// 运行中动态检测停止信号
-		if !stopped {
-			select {
-			case <-resolveCtx.Done():
-				stopped = true
-				ipAPIsAttemptsSinceStop = 0
-			default:
+		for _, url := range shuffledIPAPIs {
+			// 运行中动态检测停止信号
+			if !stopped {
+				select {
+				case <-resolveCtx.Done():
+					stopped = true
+					ipAPIsAttemptsSinceStop = 0
+				default:
+				}
+			}
+			// 若已停止且已尝试满 3 次，直接结束该循环
+			if stopped && ipAPIsAttemptsSinceStop >= 3 {
+				slog.Debug("收到停止信号后，ipAPI 最多只尝试三次，已达上限")
+				break
+			}
+
+			temp, e := c.FetchExitIP(url)
+			if e == nil && (temp.IPv4 != "" || temp.IPv6 != "") {
+				slog.Debug(fmt.Sprintf("%s : IPv4=%s IPv6=%s", url, temp.IPv4, temp.IPv6))
+				info = temp
+				break
+			}
+			slog.Debug(fmt.Sprintf("从 ipAPI 获取出口 IP 失败: %s, err: %v", url, e))
+			err = e
+
+			if stopped {
+				ipAPIsAttemptsSinceStop++
 			}
 		}
-		// 若已停止且已尝试满 3 次，直接结束该循环
-		if stopped && ipAPIsAttemptsSinceStop >= 3 {
-			slog.Debug("收到停止信号后，ipAPI 最多只尝试三次，已达上限")
-			break
-		}
 
-		temp, e := c.FetchExitIP(url)
-		if e == nil && (temp.IPv4 != "" || temp.IPv6 != "") {
-			slog.Debug(fmt.Sprintf("%s : IPv4=%s IPv6=%s", url, temp.IPv4, temp.IPv6))
-			info = temp
-			break
-		}
-		slog.Debug(fmt.Sprintf("从 ipAPI 获取出口 IP 失败: %s, err: %v", url, e))
-		err = e
-
-		if stopped {
-			ipAPIsAttemptsSinceStop++
-		}
-	}
-
-	// 2) MaxMind
-	if info.IPv4 != "" || info.IPv6 != "" {
-		if _, mmErr := c.LookupGeoIPDataWithMMDB(&info); mmErr == nil && info.CountryCode != "" {
-			ip := info.IPv4
-			if ip == "" {
-				ip = info.IPv6
+		// 2) MaxMind
+		if info.IPv4 != "" || info.IPv6 != "" {
+			if _, mmErr := c.LookupGeoIPDataWithMMDB(&info); mmErr == nil && info.CountryCode != "" {
+				ip := info.IPv4
+				if ip == "" {
+					ip = info.IPv6
+				}
+				slog.Debug(fmt.Sprintf("MaxMind 获取到 %s 的国家代码: %s", ip, info.CountryCode))
+				if info.CountryCode != "CN" || os.Getenv("SUBS-CHECK-CALL") == "" {
+					return info, nil
+				}
+			} else if mmErr != nil {
+				slog.Debug(fmt.Sprintf("MaxMind 查询失败: %v", mmErr))
+			} else {
+				slog.Debug("MaxMind 未能找到国家代码")
 			}
-			slog.Debug(fmt.Sprintf("MaxMind 获取到 %s 的国家代码: %s", ip, info.CountryCode))
-			if info.CountryCode != "CN" || os.Getenv("SUBS-CHECK-CALL") == "" {
-				return info, nil
-			}
-		} else if mmErr != nil {
-			slog.Debug(fmt.Sprintf("MaxMind 查询失败: %v", mmErr))
 		} else {
-			slog.Debug("MaxMind 未能找到国家代码")
+			slog.Debug("所有 ipAPI 均未能获取到有效的IP地址，准备使用 geoAPI 查询（有限额）")
 		}
-	} else {
-		slog.Debug("所有 ipAPI 均未能获取到有效的IP地址，准备使用 geoAPI 查询（有限额）")
 	}
 
 	// 3) geoAPI 兜底
-	shuffledGeoAPIs := shuffle(c.geoAPIs)
+	if len(c.geoAPIs) > 0 {
+		shuffledGeoAPIs := shuffle(c.geoAPIs)
 
-	// 若已经停止，则只尝试前三个；否则全部尝试
-	if stopped && len(shuffledGeoAPIs) > 3 {
-		shuffledGeoAPIs = shuffledGeoAPIs[:3]
-	}
-	geoAPIsAttemptsSinceStop := 0
-
-	for _, url := range shuffledGeoAPIs {
-		// 动态检测停止信号
-		if !stopped {
-			select {
-			case <-resolveCtx.Done():
-				stopped = true
-				geoAPIsAttemptsSinceStop = 0
-			default:
-			}
+		// 若已经停止，则只尝试前三个；否则全部尝试
+		if stopped && len(shuffledGeoAPIs) > 3 {
+			shuffledGeoAPIs = shuffledGeoAPIs[:3]
 		}
-		// 若已停止且已尝试满 3 次，结束循环
-		if stopped && geoAPIsAttemptsSinceStop >= 3 {
-			slog.Debug("收到停止信号后，geoAPI 最多只尝试三次，已达上限")
-			break
-		}
+		geoAPIsAttemptsSinceStop := 0
 
-		temp, geoErr := c.FetchGeoIPData(url)
-		if geoErr == nil && temp.CountryCode != "" {
-			// 在 subs-check 环境中，不接受 CN 代码
-			if temp.CountryCode == "CN" && os.Getenv("SUBS-CHECK-CALL") != "" {
-				if stopped {
-					geoAPIsAttemptsSinceStop++
+		for _, url := range shuffledGeoAPIs {
+			// 动态检测停止信号
+			if !stopped {
+				select {
+				case <-resolveCtx.Done():
+					stopped = true
+					geoAPIsAttemptsSinceStop = 0
+				default:
 				}
-				continue
 			}
-			slog.Debug(fmt.Sprintf("%s : %s", url, temp.CountryCode))
-			return temp, nil
-		}
-		slog.Debug(fmt.Sprintf("从 geoAPI 获取地理位置信息失败: %s, err: %v", url, geoErr))
+			// 若已停止且已尝试满 3 次，结束循环
+			if stopped && geoAPIsAttemptsSinceStop >= 3 {
+				slog.Debug("收到停止信号后，geoAPI 最多只尝试三次，已达上限")
+				break
+			}
 
-		if stopped {
-			geoAPIsAttemptsSinceStop++
+			temp, geoErr := c.FetchGeoIPData(url)
+			if geoErr == nil && temp.CountryCode != "" {
+				// 在 subs-check 环境中，不接受 CN 代码
+				if temp.CountryCode == "CN" && os.Getenv("SUBS-CHECK-CALL") != "" {
+					if stopped {
+						geoAPIsAttemptsSinceStop++
+					}
+					continue
+				}
+				slog.Debug(fmt.Sprintf("%s : %s", url, temp.CountryCode))
+				return temp, nil
+			}
+			slog.Debug(fmt.Sprintf("从 geoAPI 获取地理位置信息失败: %s, err: %v", url, geoErr))
+
+			if stopped {
+				geoAPIsAttemptsSinceStop++
+			}
 		}
 	}
 

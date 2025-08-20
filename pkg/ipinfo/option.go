@@ -160,17 +160,11 @@ func New(opts ...Option) (*Client, error) {
 	}
 
 	// API 列表兜底
-	if len(c.ipAPIs) == 0 {
+	if len(c.ipAPIs) == 0 && len(c.geoAPIs) == 0{
 		c.ipAPIs = slices.Clone(defaultIPAPIs)
-	}
-	if len(c.geoAPIs) == 0 {
 		c.geoAPIs = slices.Clone(defaultGeoAPIs)
 	}
 
-	// 最终校验
-	if len(c.ipAPIs) == 0 && len(c.geoAPIs) == 0 {
-		return nil, fmt.Errorf("no IP/Geo APIs configured")
-	}
 	if c.mmdb == nil {
 		return nil, fmt.Errorf("mmdb not initialized")
 	}
