@@ -108,7 +108,7 @@ func main() {
 	mux.Handle("/api/", h)
 
 	// 启动服务器
-	slog.Info(fmt.Sprintf("listening on http://localhost%s/api ...", cfg.Addr))
+	slog.Info(fmt.Sprintf("listening on http://0.0.0.0%s/api ...", cfg.Addr))
 	if err := http.ListenAndServe(cfg.Addr, mux); err != nil {
 		log.Fatal(err)
 	}
