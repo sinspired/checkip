@@ -21,8 +21,8 @@ github.com/ericlagergren/subtle v0.0.0-20220507045147-890d697da010 h1:fuGucgPk5d
 github.com/ericlagergren/subtle v0.0.0-20220507045147-890d697da010/go.mod h1:JtBcj7sBuTTRupn7c2bFspMDIObMJsVK8TeUvpShPok=
 github.com/ericlagergren/testutil v0.0.0-20220814024112-d21c9429edc2 h1:j9adob+s2qXdvdeJywrVifDfHAIq0XwoaK/0q4D1BGw=
 github.com/ericlagergren/testutil v0.0.0-20220814024112-d21c9429edc2/go.mod h1:E4aJHbNMb6zjyVd1Mrpf3FIJ6kAtnVUq2yl0T6DHZ/I=
-github.com/gofrs/uuid/v5 v5.3.2 h1:2jfO8j3XgSwlz/wHqemAEugfnTlikAYHhnqQ8Xh4fE0=
-github.com/gofrs/uuid/v5 v5.3.2/go.mod h1:CDOjlDMVAtN56jqyRUZh58JT31Tiw7/oQyEXZV+9bD8=
+github.com/gofrs/uuid/v5 v5.4.0 h1:EfbpCTjqMuGyq5ZJwxqzn3Cbr2d0rUZU7v5ycAk/e/0=
+github.com/gofrs/uuid/v5 v5.4.0/go.mod h1:CDOjlDMVAtN56jqyRUZh58JT31Tiw7/oQyEXZV+9bD8=
 github.com/google/tink/go v1.6.1 h1:t7JHqO8Ath2w2ig5vjwQYJzhGEZymedQc90lQXUBa4I=
 github.com/google/tink/go v1.6.1/go.mod h1:IGW53kTgag+st5yPhKKwJ6u2l+SSp5/v9XF7spovjlY=
 github.com/klauspost/compress v1.18.1 h1:bcSGx7UbpBqMChDtsF28Lw6v/G94LPrrbMbdC3JH2co=
@@ -68,8 +68,8 @@ gitlab.com/yawning/bsaes.git v0.0.0-20190805113838-0a714cd429ec h1:FpfFs4EhNehiV
 gitlab.com/yawning/bsaes.git v0.0.0-20190805113838-0a714cd429ec/go.mod h1:BZ1RAoRPbCxum9Grlv5aeksu2H8BiKehBYooU2LFiOQ=
 golang.org/x/crypto v0.43.0 h1:dduJYIi3A3KOfdGOHX8AVZ/jGiyPa3IbBozJ5kNuE04=
 golang.org/x/crypto v0.43.0/go.mod h1:BFbav4mRNlXJL4wNeejLpWxB7wMbc79PdRGhWKncxR0=
-golang.org/x/exp v0.0.0-20251017212417-90e834f514db h1:by6IehL4BH5k3e3SJmcoNbOobMey2SLpAF79iPOEBvw=
-golang.org/x/exp v0.0.0-20251017212417-90e834f514db/go.mod h1:j/pmGrbnkbPtQfxEe5D0VQhZC6qKbfKifgD0oM7sR70=
+golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546 h1:mgKeJMpvi0yx/sU5GsxQ7p6s2wtOnGAHZWCHUM4KGzY=
+golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546/go.mod h1:j/pmGrbnkbPtQfxEe5D0VQhZC6qKbfKifgD0oM7sR70=
 golang.org/x/sys v0.0.0-20190804053845-51ab0e2deafa/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.37.0 h1:fdNQudmxPjkdUTPnLn5mdQv7Zwvbvpaxqs831goi9kQ=
