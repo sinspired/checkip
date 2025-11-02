@@ -61,7 +61,6 @@ func (c *Client) GetGeoIPData(resolveCtx context.Context) (info IPData, err erro
 				break
 			}
 			slog.Debug(fmt.Sprintf("从 ipAPI 获取出口 IP 失败: %s, err: %v", url, e))
-			err = e
 
 			if stopped {
 				ipAPIsAttemptsSinceStop++

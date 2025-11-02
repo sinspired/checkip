@@ -160,7 +160,7 @@ func New(opts ...Option) (*Client, error) {
 	}
 
 	// API 列表兜底
-	if len(c.ipAPIs) == 0 && len(c.geoAPIs) == 0{
+	if len(c.ipAPIs) == 0 && len(c.geoAPIs) == 0 {
 		c.ipAPIs = slices.Clone(defaultIPAPIs)
 		c.geoAPIs = slices.Clone(defaultGeoAPIs)
 	}
@@ -178,6 +178,14 @@ func (c *Client) Close() error {
 		return nil
 	}
 	err := c.mmdb.Close()
+
+	if c.httpClient != nil {
+		c.httpClient.CloseIdleConnections()
+	}
+
+	if tr, ok := c.httpClient.Transport.(*http.Transport); ok && tr != nil {
+		tr.CloseIdleConnections()
+	}
 
 	c.mmdb = nil
 	c.ownMMDB = false

@@ -46,10 +46,10 @@ func (c *Client) FetchCFTraceFirstConcurrent(ctx context.Context, cancel context
 		ip  string
 	}
 
-	// 乱序 + 截取前5, 减轻网络负载
+	// 乱序 + 截取前3, 减轻网络负载
 	apis := shuffle(config.CF_CDN_APIS)
-	if len(apis) > 5 {
-		apis = apis[:5]
+	if len(apis) > 3 {
+		apis = apis[:3]
 	}
 
 	resultChan := make(chan result, 1)
@@ -171,6 +171,8 @@ func (c *Client) checkCFEndpoint(url string, expectedStatus int) (bool, error) {
 		return false, err
 	}
 	defer resp.Body.Close()
+
+	io.Copy(io.Discard, resp.Body) // 确保读完
 
 	if resp.StatusCode != expectedStatus {
 		if resp.StatusCode == 403 {
