@@ -76,6 +76,7 @@ func (c *Client) GetGeoIPData(resolveCtx context.Context) (info IPData, err erro
 				}
 				slog.Debug(fmt.Sprintf("MaxMind 获取到 %s 的国家代码: %s", ip, info.CountryCode))
 				if info.CountryCode != "CN" || os.Getenv("SUBS-CHECK-CALL") == "" {
+					c.CheckCDN(&info)
 					return info, nil
 				}
 			} else if mmErr != nil {
@@ -124,6 +125,7 @@ func (c *Client) GetGeoIPData(resolveCtx context.Context) (info IPData, err erro
 					continue
 				}
 				slog.Debug(fmt.Sprintf("%s : %s", url, temp.CountryCode))
+				c.CheckCDN(&temp)
 				return temp, nil
 			}
 			slog.Debug(fmt.Sprintf("从 geoAPI 获取地理位置信息失败: %s, err: %v", url, geoErr))
@@ -138,6 +140,7 @@ func (c *Client) GetGeoIPData(resolveCtx context.Context) (info IPData, err erro
 	if info.IPv4 == "" && info.IPv6 == "" {
 		return IPData{}, errors.New("所有 ipAPI 及 geoAPI 均未能获取到有效的IP地址,疑似网络断开")
 	}
+	c.CheckCDN(&info)
 	return info, errors.New("未能通过 MaxMind 或 geoAPI 获取到地理位置信息")
 }
 
