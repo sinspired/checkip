@@ -145,12 +145,12 @@ func UpdateGeoLite2DB(dbPath string) error {
 		return fmt.Errorf("GitHub API 状态码: %d", resp.StatusCode)
 	}
 
-	io.Copy(io.Discard, resp.Body) // 确保读完
-
 	var rel githubRelease
 	if err := json.NewDecoder(resp.Body).Decode(&rel); err != nil {
 		return fmt.Errorf("解析 release JSON 失败: %w", err)
 	}
+
+	_, _ = io.Copy(io.Discard, resp.Body) // 确保读完
 
 	var downloadURL string
 	for _, asset := range rel.Assets {

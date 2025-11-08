@@ -146,7 +146,7 @@ func (c *Client) GetGeoIPData(resolveCtx context.Context) (info IPData, err erro
 
 // FetchExitIP 从指定的 URL 获取出口 IP 地址
 func (c *Client) FetchExitIP(url string) (IPData, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5000*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 6000*time.Millisecond)
 	defer cancel()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -295,7 +295,10 @@ func (c *Client) LookupGeoIPDataWithMMDB(info *IPData) (string, error) {
 
 // FetchGeoIPData 从指定的 URL 获取地理位置信息
 func (c *Client) FetchGeoIPData(url string) (IPData, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5000*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 6000*time.Millisecond)
+	if strings.Contains(url, "122911.xyz") {
+		ctx, cancel = context.WithTimeout(context.Background(), 10000*time.Millisecond)
+	}
 	defer cancel()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -309,6 +312,10 @@ func (c *Client) FetchGeoIPData(url string) (IPData, error) {
 	if strings.Contains(url, "checkip.info") {
 		req.Header.Set("User-Agent", "PostmanRuntime/7.32.3")
 		req.Header.Set("Accept", "*/*")
+	}
+
+	if strings.Contains(url, "122911.xyz") {
+		req.Header.Set("User-Agent", "subs-check (https://github.com/beck-8/subs-check)")
 	}
 
 	resp, err := c.httpClient.Do(req)
