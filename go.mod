@@ -4,8 +4,8 @@ go 1.25
 
 require (
 	github.com/klauspost/compress v1.18.1
-	github.com/metacubex/mihomo v1.19.15
-	github.com/oschwald/maxminddb-golang/v2 v2.0.0
+	github.com/metacubex/mihomo v1.19.16
+	github.com/oschwald/maxminddb-golang/v2 v2.1.0
 )
 
 require (
@@ -31,8 +31,8 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	gitlab.com/go-extension/aes-ccm v0.0.0-20230221065045-e58665ef23c7 // indirect
 	gitlab.com/yawning/bsaes.git v0.0.0-20190805113838-0a714cd429ec // indirect
-	golang.org/x/crypto v0.43.0 // indirect
-	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546 // indirect
-	golang.org/x/sys v0.37.0 // indirect
-	golang.org/x/text v0.30.0 // indirect
+	golang.org/x/crypto v0.44.0 // indirect
+	golang.org/x/exp v0.0.0-20251113190631-e25ba8c21ef6 // indirect
+	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
 )
