@@ -296,9 +296,6 @@ func (c *Client) LookupGeoIPDataWithMMDB(info *IPData) (string, error) {
 // FetchGeoIPData 从指定的 URL 获取地理位置信息
 func (c *Client) FetchGeoIPData(url string) (IPData, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 6000*time.Millisecond)
-	if strings.Contains(url, "122911.xyz") {
-		ctx, cancel = context.WithTimeout(context.Background(), 10000*time.Millisecond)
-	}
 	defer cancel()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
