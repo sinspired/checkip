@@ -3,7 +3,6 @@ package ipinfo
 import (
 	"context"
 	"fmt"
-	"time"
 )
 
 // GetAnalyzed 获取出口 IP 地址和地理位置信息并分析 CDN 信息, 收到 ctx 取消信号时，会加速进行获取;
@@ -39,10 +38,17 @@ func (c *Client) GetAnalyzed(ctx context.Context, cfLoc string, cfIP string) (lo
 		return ipData.CountryCode, ip, countryCode_tag, nil
 	}
 
+	cfOK, _, _ := c.CheckCloudflare()
+
+	if !cfOK {
+		countryCode_tag = ipData.CountryCode + "⁻¹"
+		return ipData.CountryCode, ip, countryCode_tag, nil
+	}
+
 	cfProxyInfo := c.GetCfProxyInfo(&ipData, cfLoc, cfIP)
 	if cfProxyInfo.isCFProxy {
 		if cfProxyInfo.cfLoc == "" {
-			countryCode_tag = cfProxyInfo.exitLoc + "⁻¹"
+			countryCode_tag = cfProxyInfo.exitLoc + "¹" + "-" + "🏴‍☠️" + "⁰"
 		} else if cfProxyInfo.exitLoc == cfProxyInfo.cfLoc {
 			countryCode_tag = cfProxyInfo.exitLoc + "¹⁺"
 		} else {
@@ -56,11 +62,9 @@ func (c *Client) GetAnalyzed(ctx context.Context, cfLoc string, cfIP string) (lo
 
 // GetCfProxyInfo 获取 /cdn-cgi/trace 获取的 CDN 节点位置
 func (c *Client) GetCfProxyInfo(info *IPData, cfLoc string, cfIP string) (cfProxyInfo CFProxyInfo) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 	cfRelayLoc, cfRelayIP := cfLoc, cfIP
 	if cfLoc == "" {
-		cfRelayLoc, cfRelayIP = c.FetchCFTraceFirstConcurrent(ctx, cancel)
+		cfRelayLoc, cfRelayIP = c.GetCFTrace()
 	}
 
 	cfProxyInfo.isCFProxy = info.IsCDN && (info.IPv4 != cfRelayIP || info.IPv6 != "")

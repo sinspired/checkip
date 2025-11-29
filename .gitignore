@@ -54,3 +54,5 @@ tmp*.*
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+.wiki/

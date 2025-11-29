@@ -2,13 +2,11 @@ package ipinfo
 
 import (
 	"encoding/json"
-	"math/rand"
+	"math/rand/v2"
 	"net"
 	"net/netip"
 	"regexp"
-	"slices"
 	"strings"
-	"time"
 
 	"github.com/metacubex/mihomo/common/convert"
 )
@@ -71,8 +69,8 @@ func apiCommonHeaders() map[string]string {
 		"Accept":          "application/json, text/plain, */*",
 		"Accept-Language": "en-US,en;q=0.9",
 		// "User-Agent":      "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-		"Cache-Control":   "no-cache",
-		"Pragma":          "no-cache",
+		"Cache-Control": "no-cache",
+		"Pragma":        "no-cache",
 	}
 }
 
@@ -93,12 +91,11 @@ func cfCommonHeaders() map[string]string {
 
 // shuffle 随机打乱字符串切片
 func shuffle(in []string) []string {
-	if len(in) <= 1 {
-		return slices.Clone(in)
-	}
-	out := slices.Clone(in)
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	r.Shuffle(len(out), func(i, j int) { out[i], out[j] = out[j], out[i] })
+	out := append([]string(nil), in...)
+	rand.Shuffle(len(out), func(i, j int) {
+		out[i], out[j] = out[j], out[i]
+	})
+
 	return out
 }
 
@@ -169,50 +166,49 @@ func ExtractIPStrings(text string) (ipv4, ipv6 string) {
 
 // ExtractGeoIPStrings 在返回数据中查找 IP 和 国家代码,兼容不同格式的返回数据
 func ExtractGeoIPStrings(bodyBytes []byte) (ip, countryCode string) {
-    var data map[string]any
-    if err := json.Unmarshal(bodyBytes, &data); err != nil {
-        return "", ""
-    }
+	var data map[string]any
+	if err := json.Unmarshal(bodyBytes, &data); err != nil {
+		return "", ""
+	}
 
-    codeFields := []string{"countryCode", "country_code", "cc", "country"}
-    ipFields := []string{"ip", "query"}
+	codeFields := []string{"countryCode", "country_code", "cc", "country"}
+	ipFields := []string{"ip", "query"}
 
-    // 通用提取函数
-    extractField := func(m map[string]any, keys []string, validate func(string) bool) string {
-        for _, key := range keys {
-            if v, ok := m[key]; ok {
-                if s, ok := v.(string); ok && validate(s) {
-                    return s
-                }
-            }
-        }
-        return ""
-    }
+	// 通用提取函数
+	extractField := func(m map[string]any, keys []string, validate func(string) bool) string {
+		for _, key := range keys {
+			if v, ok := m[key]; ok {
+				if s, ok := v.(string); ok && validate(s) {
+					return s
+				}
+			}
+		}
+		return ""
+	}
 
-    // 优先从顶层获取
-    ip = extractField(data, ipFields, func(s string) bool { return s != "" })
-    countryCode = extractField(data, codeFields, func(s string) bool { return len(s) == 2 })
+	// 优先从顶层获取
+	ip = extractField(data, ipFields, func(s string) bool { return s != "" })
+	countryCode = extractField(data, codeFields, func(s string) bool { return len(s) == 2 })
 
-    // location 优先处理嵌套字段
-    if loc, ok := data["location"].(map[string]any); ok {
-        if ip == "" {
-            ip = extractField(loc, ipFields, func(s string) bool { return s != "" })
-        }
-        if countryCode == "" {
-            countryCode = extractField(loc, codeFields, func(s string) bool { return len(s) == 2 })
-        }
-    }
+	// location 优先处理嵌套字段
+	if loc, ok := data["location"].(map[string]any); ok {
+		if ip == "" {
+			ip = extractField(loc, ipFields, func(s string) bool { return s != "" })
+		}
+		if countryCode == "" {
+			countryCode = extractField(loc, codeFields, func(s string) bool { return len(s) == 2 })
+		}
+	}
 
-    // 其次尝试 datacenter 中查找
-    if dc, ok := data["datacenter"].(map[string]any); ok && countryCode == "" {
-        countryCode = extractField(dc, codeFields, func(s string) bool { return len(s) == 2 })
-    }
+	// 其次尝试 datacenter 中查找
+	if dc, ok := data["datacenter"].(map[string]any); ok && countryCode == "" {
+		countryCode = extractField(dc, codeFields, func(s string) bool { return len(s) == 2 })
+	}
 
-    // 最后尝试 fallback
-    if ip == "" && data["status"] == "success" {
-        ip = extractField(data, ipFields, func(s string) bool { return s != "" })
-    }
+	// 最后尝试 fallback
+	if ip == "" && data["status"] == "success" {
+		ip = extractField(data, ipFields, func(s string) bool { return s != "" })
+	}
 
-    return ip, countryCode
+	return ip, countryCode
 }
-
