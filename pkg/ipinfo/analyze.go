@@ -40,15 +40,15 @@ func (c *Client) GetAnalyzed(ctx context.Context, cfLoc string, cfIP string) (lo
 
 	cfOK, _, _ := c.CheckCloudflare()
 
-	if !cfOK {
-		countryCode_tag = ipData.CountryCode + "⁻¹"
-		return ipData.CountryCode, ip, countryCode_tag, nil
-	}
-
 	cfProxyInfo := c.GetCfProxyInfo(&ipData, cfLoc, cfIP)
 	if cfProxyInfo.isCFProxy {
 		if cfProxyInfo.cfLoc == "" {
-			countryCode_tag = cfProxyInfo.exitLoc + "¹" + "-" + "🏴‍☠️" + "⁰"
+			if cfOK {
+				countryCode_tag = cfProxyInfo.exitLoc + "¹" + "-" + "🏴‍☠️" + "⁰"
+			} else {
+				countryCode_tag = cfProxyInfo.exitLoc + "⁻¹"
+			}
+
 		} else if cfProxyInfo.exitLoc == cfProxyInfo.cfLoc {
 			countryCode_tag = cfProxyInfo.exitLoc + "¹⁺"
 		} else {
