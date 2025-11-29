@@ -14,19 +14,31 @@ import (
 	"github.com/sinspired/checkip/internal/config"
 )
 
+// CheckCloudflareQuick 快速检查是否可访问 CF
+func (c *Client) CheckCloudflareQuick() bool {
+	ok, err := c.checkCFEndpoint("https://cloudflare.com", 200)
+	if err == nil && ok {
+		slog.Debug("Cloudflare 可达，但未获取到 loc/ip")
+		return true
+	}
+	return false
+}
+
 // CheckCloudflare 检测当前客户端是否可以访问 Cloudflare CDN
 func (c *Client) CheckCloudflare() (bool, string, string) {
-	ok, err := c.checkCFEndpoint("https://cp.cloudflare.com/generate_204", 204)
+	cfRelayLoc, cfRelayIP := c.GetCFTrace()
+
+	if cfRelayLoc != "" && cfRelayIP != "" {
+		slog.Debug(fmt.Sprintf("Cloudflare CDN 检测成功: loc=%s, ip=%s", cfRelayLoc, cfRelayIP))
+		return true, cfRelayLoc, cfRelayIP
+	}
+
+	ok, err := c.checkCFEndpoint("https://cloudflare.com", 200)
 	if err == nil && ok {
-		slog.Debug("Cloudflare 可达")
+		slog.Debug("Cloudflare 可达，但未获取到 loc/ip")
 		return true, "", ""
 	}
 
-	ok, err = c.checkCFEndpoint("https://cloudflare.com", 200)
-	if err == nil && ok {
-		slog.Debug("Cloudflare 可达")
-		return true, "", ""
-	}
 	return false, "", ""
 }
 

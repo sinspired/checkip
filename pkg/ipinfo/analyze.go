@@ -33,20 +33,18 @@ func (c *Client) GetAnalyzed(ctx context.Context, cfLoc string, cfIP string) (lo
 		return ipData.ContinentCode, ip, "Local ISP", nil
 	}
 
-	if ipData.IsCDN == false {
+	if !ipData.IsCDN {
 		countryCode_tag = ipData.CountryCode + "²"
 		return ipData.CountryCode, ip, countryCode_tag, nil
 	}
 
-	cfOK, _, _ := c.CheckCloudflare()
-
 	cfProxyInfo := c.GetCfProxyInfo(&ipData, cfLoc, cfIP)
 	if cfProxyInfo.isCFProxy {
 		if cfProxyInfo.cfLoc == "" {
-			if cfOK {
-				countryCode_tag = cfProxyInfo.exitLoc + "¹" + "-" + "🏴‍☠️" + "⁰"
-			} else {
+			if !c.CheckCloudflareQuick() {
 				countryCode_tag = cfProxyInfo.exitLoc + "⁻¹"
+			} else {
+				countryCode_tag = cfProxyInfo.exitLoc + "¹" + "-" + "🏴‍☠️" + "⁰"
 			}
 
 		} else if cfProxyInfo.exitLoc == cfProxyInfo.cfLoc {
