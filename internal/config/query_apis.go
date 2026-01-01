@@ -74,5 +74,6 @@ var GEOIP_APIS = []string{
 	"https://ip-api.io/api/v1/ip",
 	"http://ip-api.com/json",
 	"https://ipwhois.app/json/",
+	"https://ipapi.co/json",
 	// "https://ipinfo.io/json", // 准确,免费速率限制
 }
