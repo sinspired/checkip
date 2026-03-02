@@ -1,10 +1,10 @@
 module github.com/sinspired/checkip
 
-go 1.25
+go 1.26
 
 require (
-	github.com/klauspost/compress v1.18.3
-	github.com/metacubex/mihomo v1.19.19
+	github.com/klauspost/compress v1.18.4
+	github.com/metacubex/mihomo v1.19.20
 	github.com/oschwald/maxminddb-golang/v2 v2.1.1
 )
 
@@ -26,9 +26,9 @@ require (
 	github.com/metacubex/http v0.1.0 // indirect
 	github.com/metacubex/mlkem v0.1.0 // indirect
 	github.com/metacubex/randv2 v0.2.0 // indirect
-	github.com/metacubex/sing v0.5.6 // indirect
+	github.com/metacubex/sing v0.5.7 // indirect
 	github.com/metacubex/sing-shadowsocks v0.2.12 // indirect
-	github.com/metacubex/tls v0.1.1 // indirect
+	github.com/metacubex/tls v0.1.4 // indirect
 	github.com/oasisprotocol/deoxysii v0.0.0-20220228165953-2091330c22b7 // indirect
 	github.com/samber/lo v1.52.0 // indirect
 	github.com/sina-ghaderi/poly1305 v0.0.0-20220724002748-c5926b03988b // indirect
@@ -37,9 +37,9 @@ require (
 	github.com/sirupsen/logrus v1.9.4 // indirect
 	gitlab.com/go-extension/aes-ccm v0.0.0-20230221065045-e58665ef23c7 // indirect
 	gitlab.com/yawning/bsaes.git v0.0.0-20190805113838-0a714cd429ec // indirect
-	golang.org/x/crypto v0.47.0 // indirect
-	golang.org/x/exp v0.0.0-20260112195511-716be5621a96 // indirect
-	golang.org/x/net v0.49.0 // indirect
-	golang.org/x/sys v0.40.0 // indirect
-	golang.org/x/text v0.33.0 // indirect
+	golang.org/x/crypto v0.48.0 // indirect
+	golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa // indirect
+	golang.org/x/net v0.51.0 // indirect
+	golang.org/x/sys v0.41.0 // indirect
+	golang.org/x/text v0.34.0 // indirect
 )
