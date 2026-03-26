@@ -16,7 +16,7 @@ import (
 
 // CheckCloudflareQuick 快速检查是否可访问 CF
 func (c *Client) CheckCloudflareQuick() bool {
-	ok, err := c.checkCFEndpoint("https://cloudflare.com", 200)
+	ok, err := c.checkCFEndpoint("http://cp.cloudflare.com/generate_204", 204)
 	if err == nil && ok {
 		slog.Debug("Cloudflare 可达，但未获取到 loc/ip")
 		return true
@@ -121,7 +121,7 @@ func (c *Client) FetchCFTrace(ctx context.Context, baseURL string) (string, stri
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 10*1024))
 	if err != nil {
 		return "", ""
 	}

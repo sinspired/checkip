@@ -20,7 +20,7 @@ var (
 	// reOriginIP  = regexp.MustCompile(`(?i)(?:X-Forwarded-For|CF-Connecting-IP|origin\s*ip)\s*[:=]\s*([0-9a-fA-F:.\[\]]+)`)
 )
 
-// IPData 存储 IP 地址信息到结构体
+// CreateIPDataFromIP IPData 存储 IP 地址信息到结构体
 func CreateIPDataFromIP(ip string) *IPData {
 	info := &IPData{}
 	if parsedIP := net.ParseIP(ip); parsedIP != nil {
@@ -85,7 +85,6 @@ func cfCommonHeaders() map[string]string {
 		"Sec-Ch-Ua-Mobile":   "?0",
 		"Sec-Ch-Ua-Platform": "\"Windows\"",
 		"Accept":             "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-		"Connection":         "close",
 	}
 }
 
