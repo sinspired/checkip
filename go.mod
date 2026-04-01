@@ -4,7 +4,7 @@ go 1.26
 
 require (
 	github.com/klauspost/compress v1.18.5
-	github.com/metacubex/mihomo v1.19.21
+	github.com/metacubex/mihomo v1.19.22
 	github.com/oschwald/maxminddb-golang/v2 v2.1.1
 )
 
