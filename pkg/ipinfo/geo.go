@@ -1,3 +1,4 @@
+// Package ipinfo 提供获取出口 IP 地址和地理位置信息的功能，主要通过 ipAPI、MaxMind 数据库和 geoAPI 进行查询，并包含 CDN 检测逻辑。
 package ipinfo
 
 import (

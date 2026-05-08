@@ -187,7 +187,7 @@ func (c *Client) checkCFEndpoint(url string, expectedStatus int) (bool, error) {
 			slog.Debug("放行状态码", "code", resp.StatusCode)
 			return true, nil
 		} else {
-			slog.Warn("cloudflare.com 返回非预期状态码", "code", resp.StatusCode)
+			slog.Debug("cloudflare.com 返回非预期状态码", "code", resp.StatusCode)
 		}
 		return false, nil
 	}
