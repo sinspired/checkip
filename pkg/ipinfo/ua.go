@@ -1,8 +1,6 @@
 package ipinfo
 
-import (
-	"github.com/metacubex/randv2"
-)
+import "math/rand/v2"
 
 var userAgents = []string{
 	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.162 Safari/537.36",
@@ -262,5 +260,5 @@ var (
 )
 
 func RandUserAgent() string {
-	return userAgents[randv2.IntN(uaLen)]
+	return userAgents[rand.IntN(uaLen)]
 }

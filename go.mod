@@ -4,7 +4,6 @@ go 1.26
 
 require (
 	github.com/klauspost/compress v1.18.5
-	github.com/metacubex/randv2 v0.2.0
 	github.com/oschwald/maxminddb-golang/v2 v2.1.1
 	github.com/zlsgo/useragent v0.0.0-20251119103354-4ad4f1fe3b88
 )
