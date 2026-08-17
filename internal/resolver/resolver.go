@@ -1,4 +1,4 @@
-// internal/checkip/checkip.go
+// Package resolver 提供 IP 地理位置解析功能
 package resolver
 
 import (
@@ -9,14 +9,29 @@ import (
 	"time"
 
 	"github.com/oschwald/maxminddb-golang/v2"
+	"github.com/sinspired/checkip/internal/config"
 	"github.com/sinspired/checkip/pkg/ipinfo"
 )
 
 // NewResolver 创建一个新的 Resolver 实例
-func NewResolver(cfCdnRanges map[string][]*net.IPNet, geoDB *maxminddb.Reader) *Resolver {
+func NewResolver(cfCdnRanges map[string][]*net.IPNet, geoDB *maxminddb.Reader, cfg *config.Config) *Resolver {
+	// 将 internal/config 的配置映射为 pkg/ipinfo 的配置
+	ispCfg := ipinfo.ISPConfig{
+		ISPCheck:                 cfg.ISPConfig.ISPCheck,
+		ISPTimeout:               cfg.ISPConfig.ISPTimeout,
+		ISPCheckAPIKeyIPAPI:      cfg.ISPConfig.ISPCheckAPIKeyIPAPI,
+		ISPCheckAPIKeyProxyCheck: cfg.ISPConfig.ISPCheckAPIKeyProxyCheck,
+		ISPCheckAPIKeyIPLocate:   cfg.ISPConfig.ISPCheckAPIKeyIPLocate,
+		ISPCheckAPIKeyIPData:     cfg.ISPConfig.ISPCheckAPIKeyIPData,
+	}
+
+	// 2. 初始化时注入
 	cli, _ := ipinfo.New(
-		ipinfo.WithHttpClient(&http.Client{Timeout: 10 * time.Second}),
+		ipinfo.WithHTTPClient(&http.Client{Timeout: 10 * time.Second}),
+		ipinfo.WithDBReader(geoDB),
+		ipinfo.WithISPConfig(ispCfg),
 	)
+
 	return &Resolver{
 		cli:        cli,
 		geoDB:      geoDB,
@@ -25,9 +40,10 @@ func NewResolver(cfCdnRanges map[string][]*net.IPNet, geoDB *maxminddb.Reader) *
 }
 
 // 填充 ResolveResult 公共逻辑
-func fillResult(ip string, isCDN bool, loc, tag string, data *ipinfo.IPData) *ResolveResult {
+func fillResult(ip string, isCDN bool, loc, tag, ispTag string, data *ipinfo.IPData) *ResolveResult {
 	return &ResolveResult{
 		Tag:           tag,
+		ISPTag:        ispTag,
 		IsCDN:         isCDN,
 		IP:            ip,
 		CountryCode:   data.CountryCode,
@@ -65,9 +81,9 @@ func (r *Resolver) Resolve(ip string) (*ResolveResult, error) {
 	// 获取代理信息（仅用于当前 IP，不用于指定 IP）
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	loc, _, tag, _ := r.cli.GetAnalyzed(ctx, "", "")
+	loc, _, tag, ispTag, _ := r.cli.GetAnalyzed(ctx, "", "")
 
-	return fillResult(ip, isCDN, loc, tag, ipData), nil
+	return fillResult(ip, isCDN, loc, tag, ispTag, ipData), nil
 }
 
 // GetCurrentIPInfo 获取当前 IP 的地理位置信息
@@ -90,9 +106,9 @@ func (r *Resolver) GetCurrentIPInfo() (*ResolveResult, error) {
 	}
 
 	// 获取代理信息
-	loc, _, tag, _ := r.cli.GetAnalyzed(ctx, "", "")
+	loc, _, tag, ispTag, _ := r.cli.GetAnalyzed(ctx, "", "")
 
-	return fillResult(ip, geoData.IsCDN, loc, tag, &geoData), nil
+	return fillResult(ip, geoData.IsCDN, loc, tag, ispTag, &geoData), nil
 }
 
 // GetCurrentIP 仅获取当前 IP 地址

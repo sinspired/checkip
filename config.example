@@ -4,12 +4,37 @@
 ADDR=:8099
 PORT=8099
 
-# 数据库配置
-MAXMIND_DB_PATH=/path/to/GeoLite2-Country.mmdb
+# MaxMind 数据库路径（留空则使用内置库并自动更新）
+MAXMIND_DB_PATH=
+
+# Cloudflare CIDR 数据路径（可选）
+CF_CIDR_PATH=
 
 # HTTP 客户端配置
 HTTP_TIMEOUT=10s
-MAX_RETRIES=3
+MAX_RETRIES=2
 
 # 日志配置
-LOG_LEVEL=info 
+LOG_LEVEL=info
+
+# GitHub 代理（可选）
+GITHUB_PROXY=https://ghproxy.net/
+
+# ISP 检查开关
+ISP_CHECK=true
+
+# ISP 检查超时时间，单位为秒
+ISP_TIMEOUT=5s
+
+# ISP 渠道 apikey（留空则跳过该渠道）
+# ipapi.is 免费额度：每天 1000 次
+ISP_APIKEY_IPAPI= ""
+
+# proxycheck.io 免费额度：每天 1000 次
+ISP_APIKEY_PROXYCHECK=""
+
+# iplocate.io 免费额度：每天 1000 次
+ISP_APIKEY_IPLOCATE=""
+
+# ipdata.co 免费额度：每天 1500 次
+ISP_APIKEY_IPDATA=""

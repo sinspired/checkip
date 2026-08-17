@@ -27,6 +27,7 @@ type ResolveResult struct {
 
 	IsCDN bool   `json:"is_cdn"`
 	Tag   string `json:"tag,omitempty"`
+	ISPTag string `json:"isp_tag,omitempty"`
 }
 
 type RegionInfo struct {

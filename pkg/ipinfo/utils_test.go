@@ -55,7 +55,7 @@ func extractIPScanFast(text string) (ipv4, ipv6 string) {
     for i := 0; i < n && (ipv4 == "" || ipv6 == ""); {
         c := text[i]
         // 只从可能是 IP 的起始字符开始（数字/冒号/点）
-        if !(isDigit(c) || c == ':' || c == '.') {
+        if (!isDigit(c) && c != ':' && c != '.') {
             i++
             continue
         }
@@ -105,19 +105,19 @@ func extractIPScanFast(text string) (ipv4, ipv6 string) {
 }
 
 func BenchmarkRegex(b *testing.B) {
-    for i := 0; i < b.N; i++ {
+    for b.Loop() {
         extractIPRegex(sampleText)
     }
 }
 
 func BenchmarkScan(b *testing.B) {
-    for i := 0; i < b.N; i++ {
+    for b.Loop() {
         extractIPScan(sampleText)
     }
 }
 
 func BenchmarkScanFast(b *testing.B) {
-    for i := 0; i < b.N; i++ {
+    for b.Loop() {
         extractIPScanFast(sampleText)
     }
 }

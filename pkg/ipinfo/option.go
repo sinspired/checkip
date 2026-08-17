@@ -33,9 +33,10 @@ type CFProxyInfo struct {
 	isCFProxy bool   // 是否 Cloudflare 代理
 	exitLoc   string // 出口 IP 的地理位置
 	cfLoc     string // Cloudflare 代理 IP 的地理位置
+	cfIP      string // Cloudflare 代理 IP
 }
 
-// IP 信息检测客户端
+// Client IP 信息检测客户端
 type Client struct {
 	httpClient *http.Client      // 指定 http 客户端
 	mmdb       *maxminddb.Reader // 指定 MaxMind Geo 数据库
@@ -43,12 +44,14 @@ type Client struct {
 	ipAPIs  []string // 指定当前客户端获取出口 IP 的API
 	geoAPIs []string // 指定当前客户端获取出口 GeoIP 的API
 
+	ispCfg ISPConfig // 指定 ISP 检测配置
+
 	// internal
 	dbPath  string // 自定义数据库路径
 	ownMMDB bool
 }
 
-// 客户端设置
+// Option 客户端设置
 type Option func(*Client) error
 
 const defaultHTTPTimeout = 10 * time.Second
@@ -73,8 +76,8 @@ var defaultGeoAPIs = []string{
 	"https://api.seeip.org/geoip",
 }
 
-// 指定 http 客户端, 默认为  &http.Client{Timeout: 10 * time.Second}
-func WithHttpClient(hc *http.Client) Option {
+// WithHTTPClient 指定 http 客户端, 默认为  &http.Client{Timeout: 10 * time.Second}
+func WithHTTPClient(hc *http.Client) Option {
 	return func(c *Client) error {
 		if hc == nil {
 			return fmt.Errorf("http client is nil")
@@ -84,7 +87,15 @@ func WithHttpClient(hc *http.Client) Option {
 	}
 }
 
-// 指定 MaxMind 格式的数据库路径,默认为内置数据库
+// WithISPConfig 提供注入 ISP 配置的 Option 函数
+func WithISPConfig(cfg ISPConfig) Option {
+	return func(c *Client) error {
+		c.ispCfg = cfg
+		return nil
+	}
+}
+
+// WithDBPath 指定 MaxMind 格式的数据库路径,默认为内置数据库
 func WithDBPath(path string) Option {
 	return func(c *Client) error {
 		if path == "" {
@@ -96,7 +107,7 @@ func WithDBPath(path string) Option {
 	}
 }
 
-// 指定 MaxMind 数据库阅读器,默认为内置阅读器
+// WithDBReader 指定 MaxMind 数据库阅读器,默认为内置阅读器
 func WithDBReader(db *maxminddb.Reader) Option {
 	return func(c *Client) error {
 		if db == nil {
@@ -109,7 +120,7 @@ func WithDBReader(db *maxminddb.Reader) Option {
 	}
 }
 
-// 指定当前客户端获取出口 API,默认为内置 API
+// WithIPAPIs 指定当前客户端获取出口 API,默认为内置 API
 func WithIPAPIs(apis ...string) Option {
 	return func(c *Client) error {
 		c.ipAPIs = slices.Clone(apis)
@@ -117,7 +128,7 @@ func WithIPAPIs(apis ...string) Option {
 	}
 }
 
-// 指定当前客户端获取 Geo 信息的API,默认为内置 API
+// WithGeoAPIs 指定当前客户端获取 Geo 信息的API,默认为内置 API
 func WithGeoAPIs(apis ...string) Option {
 	return func(c *Client) error {
 		c.geoAPIs = slices.Clone(apis)
@@ -125,7 +136,7 @@ func WithGeoAPIs(apis ...string) Option {
 	}
 }
 
-// 创建新的 ipinfo 客户端
+// New 创建新的 ipinfo 客户端
 func New(opts ...Option) (*Client, error) {
 	c := &Client{}
 

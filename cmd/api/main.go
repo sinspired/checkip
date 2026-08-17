@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/joho/godotenv"
 	"log"
 	"log/slog"
 	"net/http"
@@ -25,14 +26,41 @@ const (
 
 func ensureEnvFile() {
 	if _, err := os.Stat(envFile); os.IsNotExist(err) {
-		defaultEnv := `ADDR=:8099
+		defaultEnv := `# 服务器配置
+ADDR=:8099
 PORT=8099
+
+# MaxMind 数据库路径（留空则使用内置库并自动更新）
 MAXMIND_DB_PATH=
+
+# Cloudflare CIDR 数据路径（可选）
 CF_CIDR_PATH=
+
+# HTTP 客户端配置
 HTTP_TIMEOUT=10s
 MAX_RETRIES=3
+
+# 日志配置
 LOG_LEVEL=info
-GITHUB_PROXY="https://ghproxy.net/"
+
+# GitHub 代理（可选）
+GITHUB_PROXY=https://ghproxy.net/
+
+# ISP 检查开关
+ISP_CHECK=true
+
+# ISP 渠道 apikey（留空则跳过该渠道）
+# ipapi.is 免费额度：每天 1000 次
+ISP_APIKEY_IPAPI=
+
+# proxycheck.io 免费额度：每天 1000 次
+ISP_APIKEY_PROXYCHECK=
+
+# iplocate.io 免费额度：每天 1000 次
+ISP_APIKEY_IPLOCATE=
+
+# ipdata.co 免费额度：每天 1500 次
+ISP_APIKEY_IPDATA=
 `
 		_ = os.WriteFile(envFile, []byte(defaultEnv), 0644)
 	}
@@ -71,6 +99,11 @@ func main() {
 	// 自动创建 .env 文件
 	ensureEnvFile()
 
+	// 加载 .env 到环境变量
+	if err := godotenv.Load(".env"); err != nil {
+		log.Printf("未找到 .env 文件，使用系统环境变量: %v", err)
+	}
+
 	// 加载配置
 	cfg := config.Load()
 
@@ -100,7 +133,7 @@ func main() {
 	defer geo.Close()
 
 	// 创建检查器
-	ck := resolver.NewResolver(cidrs, geo)
+	ck := resolver.NewResolver(cidrs, geo,cfg)
 	h := &server.Handler{Resolver: ck}
 
 	// 设置路由

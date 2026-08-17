@@ -57,7 +57,7 @@ func (c *Client) FetchCFTraceFirstConcurrent(ctx context.Context, cancel context
 	}
 
 	// 乱序 + 截取前3, 减轻网络负载
-	apis := shuffle(config.CF_CDN_APIS)
+	apis := shuffle(config.CfCdnAPIs)
 	if len(apis) > 3 {
 		apis = apis[:3]
 	}

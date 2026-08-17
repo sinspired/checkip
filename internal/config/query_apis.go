@@ -1,7 +1,7 @@
 package config
 
-// 使用了 cloudflare CDN 的地址，用于拼接 /cdn-cgi/trace 获取 CDN 节点位置
-var CF_CDN_APIS = []string{
+// CfCdnAPIs 使用了 cloudflare CDN 的地址，用于拼接 /cdn-cgi/trace 获取 CDN 节点位置
+var CfCdnAPIs = []string{
 	"https://4.ipw.cn",
 	"https://www.cloudflare.com",
 	"https://api.ipify.org",
@@ -18,7 +18,7 @@ var CF_CDN_APIS = []string{
 	"https://api.ipquery.io",
 }
 
-var IP_APIS = []string{
+var IPAPIS = []string{
 	"http://checkip.amazonaws.com",
 	"https://checkip.global.api.aws",
 	"https://check.torproject.org/api/ip",
@@ -32,8 +32,8 @@ var IP_APIS = []string{
 	"https://ip6.me/api/",
 	"https://ipv4.my.ipinfo.app/api/ipDetails.php",
 	"https://ipv6.my.ipinfo.app/api/ipDetails.php",
-	"https://ipv6.wtfismyip.com/text", //名字很有趣
-	"https://myip.wtf/json",           //名字很有趣
+	"https://ipv6.wtfismyip.com/text", // 名字很有趣
+	"https://myip.wtf/json",           // 名字很有趣
 
 	"https://checkip.info/ip",
 	"https://checkip.dns.he.net/",
@@ -61,7 +61,7 @@ var IP_APIS = []string{
 	// "https://geolocation-db.com/json/",
 }
 
-var GEOIP_APIS = []string{
+var GeoIPAPIs = []string{
 	"https://4.ident.me/json",
 	"https://4.tnedi.me/json",
 	"https://ident.me/json",

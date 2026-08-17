@@ -18,7 +18,7 @@ func TestGetAnalyzed(t *testing.T) {
 	defer db.Close()
 
 	cli, err := New(
-		WithHttpClient(client),
+		WithHTTPClient(client),
 		WithDBReader(db),
 		WithIPAPIs(),
 		WithGeoAPIs(),
@@ -28,12 +28,12 @@ func TestGetAnalyzed(t *testing.T) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	loc, ip, countryCode_tag, err := cli.GetAnalyzed(ctx, "", "")
+	loc, ip, countryCodeTag, ispTag, err := cli.GetAnalyzed(ctx, "", "")
 	if err != nil {
 		t.Errorf("获取代理国家信息失败: %v", err)
 	} else {
-		t.Logf("位置: %s, IP: %s, 标签: %s", loc, ip, countryCode_tag)
-		if loc == "" || ip == "" || countryCode_tag == "" {
+		t.Logf("位置: %s, IP: %s, 标签: %s, ISP标签: %s", loc, ip, countryCodeTag, ispTag)
+		if loc == "" || ip == "" || countryCodeTag == "" {
 			t.Error("获取的国家信息或IP地址不完整")
 		}
 	}

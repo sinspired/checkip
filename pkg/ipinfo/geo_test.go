@@ -3,6 +3,7 @@ package ipinfo
 import (
 	"context"
 	"crypto/tls"
+
 	// "crypto/tls"
 	"net/http"
 	"regexp"
@@ -12,7 +13,7 @@ import (
 	"github.com/sinspired/checkip/internal/data"
 )
 
-var test_IP_APIS = []string{
+var testIPAPIs = []string{
 	"https://ip.122911.xyz/api/ipinfo",
 	"https://qifu-api.baidubce.com/ip/local/geo/v1/district",
 	"https://r.inews.qq.com/api/ip2city",
@@ -24,7 +25,7 @@ var test_IP_APIS = []string{
 	"https://api6.ipify.org?format=json", // IPv4使用了 CFCDN, IPv6 位置准确
 }
 
-var test_GEOIP_APIS = []string{
+var testGeoIPAPIs = []string{
 	"https://ip.122911.xyz/api/ipinfo",
 	"https://ident.me/json",
 	"https://tnedi.me/json",
@@ -47,9 +48,9 @@ func TestGetGeoIPData(t *testing.T) {
 	defer db.Close()
 
 	cli, err := New(
-		WithHttpClient(client),
+		WithHTTPClient(client),
 		WithDBReader(db),
-		WithIPAPIs(test_IP_APIS...),
+		WithIPAPIs(testIPAPIs...),
 		WithGeoAPIs(),
 	)
 	if err != nil {
@@ -86,10 +87,10 @@ func TestFetchExitIPandLookupGeoDB(t *testing.T) {
 	defer db.Close()
 
 	cli, err := New(
-		WithHttpClient(client),
+		WithHTTPClient(client),
 		WithDBReader(db),
-		WithIPAPIs(test_IP_APIS...),
-		WithGeoAPIs(test_GEOIP_APIS...),
+		WithIPAPIs(testIPAPIs...),
+		WithGeoAPIs(testGeoIPAPIs...),
 	)
 	if err != nil {
 		t.Fatalf("初始化客户端失败: %v", err)
@@ -146,10 +147,10 @@ func TestFetchExitIP(t *testing.T) {
 	defer db.Close()
 
 	cli, err := New(
-		WithHttpClient(client),
+		WithHTTPClient(client),
 		WithDBReader(db),
-		WithIPAPIs(test_IP_APIS...),
-		WithGeoAPIs(test_GEOIP_APIS...),
+		WithIPAPIs(testIPAPIs...),
+		WithGeoAPIs(testGeoIPAPIs...),
 	)
 	if err != nil {
 		t.Fatalf("初始化客户端失败: %v", err)
@@ -237,10 +238,10 @@ func TestFetchGeoIPData(t *testing.T) {
 	defer db.Close()
 
 	cli, err := New(
-		WithHttpClient(client),
+		WithHTTPClient(client),
 		WithDBReader(db),
 		WithIPAPIs(),
-		WithGeoAPIs(test_GEOIP_APIS...),
+		WithGeoAPIs(testGeoIPAPIs...),
 	)
 	if err != nil {
 		t.Fatalf("初始化客户端失败: %v", err)
