@@ -289,7 +289,7 @@ func (c *Client) queryISPDetail(ip string) *ISPInfo {
 		return nil
 	}
 
-	slog.Info("queryISPDetail", "ip", ip, "ispCheck", c.ispCfg.ISPCheck, "ispTimeout", c.ispCfg.ISPTimeout, "ispAPIKeyIPAPI", c.ispCfg.ISPCheckAPIKeyIPAPI, "ispAPIKeyProxyCheck", c.ispCfg.ISPCheckAPIKeyProxyCheck, "ispAPIKeyIPLocate", c.ispCfg.ISPCheckAPIKeyIPLocate, "ispAPIKeyIPData", c.ispCfg.ISPCheckAPIKeyIPData)
+	slog.Debug("queryISPDetail", "ip", ip, "ispCheck", c.ispCfg.ISPCheck, "ispTimeout", c.ispCfg.ISPTimeout, "ispAPIKeyIPAPI", c.ispCfg.ISPCheckAPIKeyIPAPI, "ispAPIKeyProxyCheck", c.ispCfg.ISPCheckAPIKeyProxyCheck, "ispAPIKeyIPLocate", c.ispCfg.ISPCheckAPIKeyIPLocate, "ispAPIKeyIPData", c.ispCfg.ISPCheckAPIKeyIPData)
 	all := c.buildProviders(ip)
 	cf := c.buildProvidersCF(ip)
 
@@ -332,7 +332,7 @@ func (c *Client) queryISPDetail(ip string) *ISPInfo {
 // —— 即便某个渠道只查到了国家代码，这里也不会用它拼标签，避免出现
 // "[原生]"这种看不出具体类型、容易让人误解的标签。
 func (c *Client) GetISPInfo(ip string) string {
-	slog.Info("GetISPInfo", "ip", ip, "ispCheck", c.ispCfg.ISPCheck, "ispTimeout", c.ispCfg.ISPTimeout, "ispAPIKeyIPAPI", c.ispCfg.ISPCheckAPIKeyIPAPI, "ispAPIKeyProxyCheck", c.ispCfg.ISPCheckAPIKeyProxyCheck, "ispAPIKeyIPLocate", c.ispCfg.ISPCheckAPIKeyIPLocate, "ispAPIKeyIPData", c.ispCfg.ISPCheckAPIKeyIPData)
+	slog.Debug("GetISPInfo", "ip", ip, "ispCheck", c.ispCfg.ISPCheck, "ispTimeout", c.ispCfg.ISPTimeout, "ispAPIKeyIPAPI", c.ispCfg.ISPCheckAPIKeyIPAPI, "ispAPIKeyProxyCheck", c.ispCfg.ISPCheckAPIKeyProxyCheck, "ispAPIKeyIPLocate", c.ispCfg.ISPCheckAPIKeyIPLocate, "ispAPIKeyIPData", c.ispCfg.ISPCheckAPIKeyIPData)
 	if !c.ispCfg.ISPCheck {
 		return ""
 	}

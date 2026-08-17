@@ -35,7 +35,7 @@ func (c *Client) GetAnalyzed(ctx context.Context, cfLoc string, cfIP string) (lo
 	}
 
 	// 实际ip的isp标签
-	slog.Info("GetAnalyzed", "ip", ip, "isCDN", ipData.IsCDN, "countryCode", ipData.CountryCode, "cfLoc", cfLoc, "cfIP", cfIP)
+	slog.Debug("GetAnalyzed", "ip", ip, "isCDN", ipData.IsCDN, "countryCode", ipData.CountryCode, "cfLoc", cfLoc, "cfIP", cfIP)
 	ispTag = c.GetISPInfo(ip)
 
 	if !ipData.IsCDN {
