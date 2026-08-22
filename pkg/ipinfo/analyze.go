@@ -47,35 +47,23 @@ func (c *Client) GetAnalyzed(ctx context.Context, cfLoc string, cfIP string) (lo
 
 	switch {
 	case cfProxyInfo.isCFProxy && cfProxyInfo.cfLoc != "":
-		// 获取 CF 代理节点的 ISP 标签
-		ispTagCF := c.GetISPInfo(cfProxyInfo.cfIP)
-		if ispTagCF != "" {
-			ispTag = ispTag + "¹" + ispTagCF + "⁰"
-		} else if ispTag != "" {
-			ispTag = ispTag + "¹" + "[未知]" + "⁰"
-		}
-		countryCodeTag = cfProxyInfo.exitLoc + "¹" + "-" + cfProxyInfo.cfLoc + "⁰"
+		ispTag = mergeISPTag(ispTag, c.GetISPInfo(cfProxyInfo.cfIP))
+		countryCodeTag = formatCountryTag(cfProxyInfo.exitLoc, cfProxyInfo.cfLoc)
 
 	case cfProxyInfo.isCFProxy && cfProxyInfo.cfLoc == "":
 		if !c.CheckCloudflareQuick() {
 			countryCodeTag = cfProxyInfo.exitLoc + "⁻¹"
 		} else {
 			ispTagCF, countryCodeCF := c.GetISPInfoCFfallback()
-			if ispTagCF == "" {
-				ispTagCF = "[未知]"
-			}
-			if ispTag != "" {
-				ispTag = ispTag + "¹" + ispTagCF + "⁰"
-			}
-
-			countryCodeTag = cfProxyInfo.exitLoc + "¹" + "-" + countryCodeCF + "⁰"
+			ispTag = mergeISPTag(ispTag, ispTagCF)
+			countryCodeTag = formatCountryTag(cfProxyInfo.exitLoc, countryCodeCF)
 		}
 
 	case cfProxyInfo.isCFProxy && cfProxyInfo.exitLoc == cfProxyInfo.cfLoc:
 		countryCodeTag = cfProxyInfo.exitLoc + "¹⁺"
 
 	case cfProxyInfo.isCFProxy:
-		countryCodeTag = cfProxyInfo.exitLoc + "¹" + "-" + cfProxyInfo.cfLoc + "⁰"
+		countryCodeTag = formatCountryTag(cfProxyInfo.exitLoc, cfProxyInfo.cfLoc)
 
 	default:
 		countryCodeTag = cfProxyInfo.exitLoc + "²"
@@ -97,4 +85,32 @@ func (c *Client) GetCfProxyInfo(info *IPData, cfLoc string, cfIP string) (cfProx
 	cfProxyInfo.cfLoc = cfRelayLoc
 	cfProxyInfo.cfIP = cfRelayIP
 	return cfProxyInfo
+}
+
+// 合并 ISP 标签，避免重复角标
+func mergeISPTag(base, cf string) string {
+	if cf == "" {
+		if base != "" {
+			return base + "¹[未知]⁰"
+		}
+		return base
+	}
+	if base == "" {
+		return cf
+	}
+	if base == cf {
+		return base + "¹⁰"
+	}
+	return base + "¹" + cf + "⁰"
+}
+
+// 格式化国家代码标签
+func formatCountryTag(exitLoc, cfLoc string) string {
+	if exitLoc == "" {
+		return cfLoc
+	}
+	if cfLoc == "" {
+		return exitLoc
+	}
+	return exitLoc + "¹-" + cfLoc + "⁰"
 }
