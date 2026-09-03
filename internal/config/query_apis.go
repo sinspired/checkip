@@ -2,20 +2,22 @@ package config
 
 // CfCdnAPIs 使用了 cloudflare CDN 的地址，用于拼接 /cdn-cgi/trace 获取 CDN 节点位置
 var CfCdnAPIs = []string{
-	"https://4.ipw.cn",
+	// "https://4.ipw.cn",
 	"https://www.cloudflare.com",
 	"https://api.ipify.org",
-	"https://ip.122911.xyz",
+	// "https://ip.122911.xyz",
 	"https://6.iplark.com",
 	"https://ifconfig.co",
 	"https://api.ip2location.io",
-	"https://api.ip.sb/",
+	"https://api.ip.sb",
 	"https://realip.cc",
 	"https://ipapi.co",
 	"https://free.freeipapi.com",
 	"https://api.myip.com",
 	"https://api.ipbase.com",
 	"https://api.ipquery.io",
+	"https://ipapi.co",
+	"https://ipwhois.app",
 }
 
 var IPAPIS = []string{
@@ -30,8 +32,8 @@ var IPAPIS = []string{
 	"https://ipv6.seeip.org/ip",
 	"https://ip4.me/api/",
 	"https://ip6.me/api/",
-	"https://ipv4.my.ipinfo.app/api/ipDetails.php",
-	"https://ipv6.my.ipinfo.app/api/ipDetails.php",
+	// "https://ipv4.my.ipinfo.app/api/ipDetails.php",
+	// "https://ipv6.my.ipinfo.app/api/ipDetails.php",
 	"https://ipv6.wtfismyip.com/text", // 名字很有趣
 	"https://myip.wtf/json",           // 名字很有趣
 
@@ -45,8 +47,8 @@ var IPAPIS = []string{
 	"https://ipinfo.io/ip",
 	"https://freedns.afraid.org/dynamic/check.php",
 
-	"https://test.ipw.cn/",               // IPv4使用了 CFCDN, IPv6 位置准确
-	"https://6.ipw.cn/",                  // IPv4使用了 CFCDN, IPv6 位置准确
+	// "https://test.ipw.cn/",               // IPv4使用了 CFCDN, IPv6 位置准确
+	// "https://6.ipw.cn/",                  // IPv4使用了 CFCDN, IPv6 位置准确
 	"https://api6.ipify.org?format=json", // IPv4使用了 CFCDN, IPv6 位置准确
 
 	// 国内大厂接口
@@ -70,10 +72,10 @@ var GeoIPAPIs = []string{
 	"https://api.seeip.org/geoip",
 	"https://api.ipapi.is",
 	"https://checkip.info/json",
-	"https://ip-api.io/json",
-	"https://ip-api.io/api/v1/ip",
-	"http://ip-api.com/json",
-	"https://ipwhois.app/json/",
-	"https://ipapi.co/json",
+	// "https://ip-api.io/json",
+	// "https://ip-api.io/api/v1/ip",
+	// "http://ip-api.com/json",
+	// "https://ipwhois.app/json/",
+	// "https://ipapi.co/json",
 	// "https://ipinfo.io/json", // 准确,免费速率限制
 }
