@@ -293,21 +293,22 @@ func (c *Client) queryISPDetail(ip string) *ISPInfo {
 	all := c.buildProviders(ip)
 	cf := c.buildProvidersCF(ip)
 
-	primary, fallback := splitProviders(all)
-	if len(primary) == 0 && len(fallback) == 0 {
+	mergeProvides := append(all, cf...)
+	primary, fallback := splitProviders(mergeProvides)
+	if len(primary)+len(fallback) == 0 {
 		return nil
 	}
 
 	if c.ispCfg.ISPTimeout <= 0 {
 		c.ispCfg.ISPTimeout = 5 * time.Second
 	}
-	
+
 	ctx, cancel := context.WithTimeout(context.Background(), c.ispCfg.ISPTimeout)
 	defer cancel()
 
 	var bestPartial *ISPInfo
 
-	if ip != "" {
+	if ip != "" && len(cf) > 0 {
 		if info := c.tryProviders(ctx, cf, &bestPartial); info != nil {
 			return info
 		}
