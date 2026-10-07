@@ -65,7 +65,7 @@ func (c *Client) FetchCFTraceFirstConcurrent(ctx context.Context, cancel context
 	var once sync.Once
 	var wg sync.WaitGroup
 
-	retries := 2
+	retries := 1
 
 	for _, baseURL := range apis {
 		wg.Add(1)
