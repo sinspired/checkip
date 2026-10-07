@@ -2,7 +2,6 @@ package ipinfo
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"io"
 	"log/slog"
@@ -58,8 +57,8 @@ func (c *Client) FetchCFTraceFirstConcurrent(ctx context.Context, cancel context
 
 	// 乱序 + 截取前3, 减轻网络负载
 	apis := shuffle(config.CfCdnAPIs)
-	if len(apis) > 3 {
-		apis = apis[:3]
+	if len(apis) > 2 {
+		apis = apis[:2]
 	}
 
 	resultChan := make(chan result, 1)
@@ -115,11 +114,18 @@ func (c *Client) FetchCFTrace(ctx context.Context, baseURL string) (string, stri
 		req.Header.Set(key, value)
 	}
 
+	// 一次性请求，用完立即关闭连接
+	req.Close = true
+
 	resp, err := c.httpClient.Do(req)
-	if err != nil || resp.StatusCode != http.StatusOK {
+	if err != nil {
 		return "", ""
 	}
+	// 非 200 时原先直接 return，响应体未关闭导致连接泄漏
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return "", ""
+	}
 
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 10*1024))
 	if err != nil {
@@ -149,18 +155,7 @@ func (c *Client) checkCFEndpoint(url string, expectedStatus int) (bool, error) {
 		req.Header.Set(key, value)
 	}
 
-	transport := c.httpClient.Transport
-	if transport == nil {
-		transport = &http.Transport{}
-	}
-	if t, ok := transport.(*http.Transport); ok {
-		sni := req.URL.Hostname()
-		t.TLSClientConfig = &tls.Config{
-			InsecureSkipVerify: true,
-			ServerName:         sni,
-		}
-		c.httpClient.Transport = t
-	}
+	req.Close = true // 一次性探测，不保留连接
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

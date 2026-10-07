@@ -32,7 +32,9 @@ func (c *Client) GetGeoIPData(resolveCtx context.Context) (info IPData, err erro
 		shuffledIPAPIs := shuffle(c.ipAPIs)
 
 		// 若已收到停止信号，则只尝试前三个；否则全部尝试
-		if stopped && len(shuffledIPAPIs) > 3 {
+		if stopped && len(shuffledIPAPIs) > 2 {
+			shuffledIPAPIs = shuffledIPAPIs[:2]
+		} else if len(shuffledIPAPIs) > 3 {
 			shuffledIPAPIs = shuffledIPAPIs[:3]
 		}
 
@@ -95,7 +97,9 @@ func (c *Client) GetGeoIPData(resolveCtx context.Context) (info IPData, err erro
 		shuffledGeoAPIs := shuffle(c.geoAPIs)
 
 		// 若已经停止，则只尝试前三个；否则全部尝试
-		if stopped && len(shuffledGeoAPIs) > 3 {
+		if stopped && len(shuffledGeoAPIs) > 2 {
+			shuffledGeoAPIs = shuffledGeoAPIs[:2]
+		} else if len(shuffledGeoAPIs) > 3 {
 			shuffledGeoAPIs = shuffledGeoAPIs[:3]
 		}
 		geoAPIsAttemptsSinceStop := 0
