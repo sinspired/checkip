@@ -114,9 +114,6 @@ func (c *Client) FetchCFTrace(ctx context.Context, baseURL string) (string, stri
 		req.Header.Set(key, value)
 	}
 
-	// 一次性请求，用完立即关闭连接
-	req.Close = true
-
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return "", ""
@@ -154,8 +151,6 @@ func (c *Client) checkCFEndpoint(url string, expectedStatus int) (bool, error) {
 	for key, value := range cfCommonHeaders() {
 		req.Header.Set(key, value)
 	}
-
-	req.Close = true // 一次性探测，不保留连接
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
